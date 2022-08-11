@@ -1,0 +1,19 @@
+{
+  "icon": "alfresco.svg",
+  "vm": {
+    "composefile": "docker-compose.yaml",
+    "exposes": {
+      "socket": "extension-alfresco-extension.sock"
+    }
+  },
+  "ui": {
+    "dashboard-tab": {
+      "title": "Alfresco",
+      "src": "index.html",
+      "root": "ui",
+      "backend": {
+        "socket": "extension-alfresco-extension.sock"
+      }
+    }
+  }
+}
