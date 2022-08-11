@@ -10,3 +10,7 @@ make build-extension
 
 ## Installing the Docker Extension in local Docker Desktop
 
+```sh
+make install-extension
+```
+
