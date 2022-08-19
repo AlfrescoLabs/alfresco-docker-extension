@@ -49,6 +49,7 @@ export const runningContainersJson = async () => {
         '-f', 'name=activemq',
         '-f', 'name=transform-core-aio',
         '-f', 'name=solr6',
+        '--no-trunc',
         '--format', '"{{json .}}"'
     ])
     return result.stdout
@@ -285,3 +286,8 @@ export const waitTillReadyDb = async () => {
         waitTillReadyDb()
     }
 }
+
+export const viewContainer = async (id: string) => {
+    await ddClient.desktopUI.navigate.viewContainer(id);
+};
+

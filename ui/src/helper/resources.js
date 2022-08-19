@@ -15,6 +15,7 @@ export const resources = {
               VERSION  : "Version",
               NAME  : "Name",
               STATUS  : "Status",
+              DETAILS : "",
               ALFRESCO_READY_TITLE : "Alfresco is Ready!",
               ALFRESCO_READY_MESSAGE: "Type http://localhost:8080/alfresco in your browser and use default credentials admin/admin",
               ALFRESCO_STARTING_TITLE : "Alfresco is starting",

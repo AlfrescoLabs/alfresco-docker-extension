@@ -1,17 +1,19 @@
-import { Alert, AlertTitle, Box, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { Alert, AlertTitle, Box, Button, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import InfoIcon from '@mui/icons-material/Info';
 import React, { useEffect } from "react";
 import { blueGrey } from "@mui/material/colors";
-import { readyActiveMq, readyDb, readyRepo, readySolr, readyTransform, runningContainersJson } from "../helper/cli";
+import { readyActiveMq, readyDb, readyRepo, readySolr, readyTransform, runningContainersJson, viewContainer } from "../helper/cli";
 import { resources } from '../helper/resources'
 
 function createData(
     image: string,
     version: string,
     name: string,
-    state: string
+    state: string,
+    id: string
   ) 
 {
-    return { image, version, name, state };
+    return { image, version, name, state, id };
 }
 
 const getRows = async (
@@ -65,16 +67,16 @@ const getRows = async (
                         setIsReady(false)
                     }
                 }
-                if (json.Names == 'solr6') {
+                if (json.Names === 'solr6') {
                     let status:string = await readySolr()
-                    if (status == '200') {
+                    if (status === '200') {
                         state = 'READY'
                     } else {
                         state = 'STARTING'
                         setIsReady(false)
                     }
                 }
-                rows.push(createData(imageParts[0], imageParts[1], json.Names, state))
+                rows.push(createData(imageParts[0], imageParts[1], json.Names, state, json.ID))
             }
         }
     } catch (err) {
@@ -153,6 +155,7 @@ export const DockerContainerList = () => {
                             <TableCell><b>{resources.LIST.VERSION}</b></TableCell>
                             <TableCell><b>{resources.LIST.NAME}</b></TableCell>
                             <TableCell align="center"><b>{resources.LIST.STATUS}</b></TableCell>
+                            <TableCell align="center"><b>{resources.LIST.DETAILS}</b></TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -167,6 +170,13 @@ export const DockerContainerList = () => {
                         <TableCell>{row.version}</TableCell>
                         <TableCell>{row.name}</TableCell>
                         <TableCell align="center">{row.state}</TableCell>
+                        <TableCell align="right">
+                            <Button onClick={() => {
+                                    viewContainer(row.id)
+                                }}>
+                                <InfoIcon/>
+                            </Button>
+                        </TableCell>
                         </TableRow>
                     ))}
                     </TableBody>
