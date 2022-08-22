@@ -67,7 +67,7 @@ export const createNetwork = async () => {
 
 // Stop running containers in 'alfresco' network
 export const stopContainers  = async () => {
-    const containers = await ddClient.docker.cli.exec('ps', ['-qf', '"network=alfresco'])
+    const containers = await ddClient.docker.cli.exec('ps', ['-qf', '"network=alfresco"'])
     await ddClient.docker.cli.exec('stop', containers.stdout.split(/\r?\n|\r|\n/g))
 }
 
