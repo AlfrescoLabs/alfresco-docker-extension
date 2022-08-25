@@ -24,7 +24,7 @@ Since this Docker Extensions hasn't been yet published, it's required to build a
 Run the following command to build and install the local extension:
 
 ```sh
-make build-extension
+make install-extension
 ```
 
 ## Using the Extension
