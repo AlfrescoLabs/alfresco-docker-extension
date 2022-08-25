@@ -81,7 +81,11 @@ const getRows = async (
         }
     } catch (err) {
         setIsError(err)
-        alert(JSON.stringify(err))
+    }
+
+    // All containers must be running
+    if (rows.length > 0 && rows.length < 5) {
+        setIsError(resources.LIST.ALFRESCO_CONTAINERS_LIST_ERROR)
     }
 
     return rows
@@ -104,8 +108,17 @@ export const DockerContainerList = () => {
         })()
       }, [])
 
-    let statusComponent = {}
-    if (isReady) {
+    let statusComponent: {}
+    let errorComponent: {}
+
+    if (isError !== '') {
+        errorComponent = <Box>
+            <Alert severity="error">
+                <AlertTitle>ERROR</AlertTitle>
+                {isError}
+            </Alert>
+        </Box>
+    } else if (isReady) {
         statusComponent = <Box>
                 <Alert severity="success">
                     <AlertTitle>{resources.LIST.ALFRESCO_READY_TITLE}</AlertTitle>
@@ -119,16 +132,6 @@ export const DockerContainerList = () => {
                     {resources.LIST.ALFRESCO_STARTING_MESSAGE}
                 </Alert>
             </Box>
-    }
-
-    let errorComponent: {}
-    if (isError !== '') {
-        errorComponent = <Box>
-            <Alert severity="error">
-                <AlertTitle>ERROR</AlertTitle>
-                {isError}
-            </Alert>
-        </Box>
     }
     
     if (isLoading) {

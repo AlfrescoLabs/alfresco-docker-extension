@@ -20,5 +20,6 @@ export const resources = {
               ALFRESCO_READY_MESSAGE: "Type http://localhost:8080/alfresco in your browser and use default credentials admin/admin",
               ALFRESCO_STARTING_TITLE : "Alfresco is starting",
               ALFRESCO_STARTING_MESSAGE : "Wait a few minutes till Alfresco is ready. You may use the Refresh button to update status.",
+              ALFRESCO_CONTAINERS_LIST_ERROR : "Following container names were expected: alfresco, solr6, transform-core-aio, activemq and postgres. At least one of them was unable to run. Please hit button Stop and review your RAM availability before trying again."
             },
   }
