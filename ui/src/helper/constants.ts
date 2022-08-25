@@ -1,4 +1,4 @@
-export const RAM_LIMIT = 15
+export const RAM_LIMIT = 10
 
 export const POSTGRES_IMAGE_TAG = 'postgres:13.3'
 export const ACTIVEMQ_IMAGE_TAG = 'alfresco/alfresco-activemq:5.16.4-jre11-centos7'

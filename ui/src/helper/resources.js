@@ -2,7 +2,7 @@ export const resources = {
     HOME : {
               TITLE : "Alfresco Content Service (ACS) deployment tool",
               RAM_ALERT_TITLE : "Not enough RAM available!",
-              RAM_ALERT_MESSAGE : "Despite ACS may work with less than 16 GB RAM, it's recommended to use at least this amount of RAM. Review Docker Desktop configuration to increase this resource.",
+              RAM_ALERT_MESSAGE : "Despite ACS may work with less than 10 GB RAM, it's recommended to use at least this amount of RAM. Review Docker Desktop configuration to increase this resource.",
               RAM_AVAILABLE_MESSAGE : "Currently RAM allocated for docker in GB is ",
             },
     CREATE : {
