@@ -3,7 +3,7 @@ import InfoIcon from '@mui/icons-material/Info'
 import ErrorIcon from '@mui/icons-material/Error'
 import React, { useEffect } from "react"
 import { blueGrey } from "@mui/material/colors"
-import { readyActiveMq, readyDb, readyRepo, readySolr, readyTransform, runningContainersJson, stoppedContainersJson, viewContainer } from "../helper/cli"
+import { readyActiveMq, readyDb, readyRepo, readySolr, readyTransform, containerListJson, viewContainer } from "../helper/cli"
 import { resources } from '../helper/resources'
 
 function createData(
@@ -25,77 +25,67 @@ const getRows = async (
     let rows = []
 
     try {
-        const result = await runningContainersJson()
+        const result = await containerListJson()
         var lines = result.toString().split(/\r?\n|\r|\n/g);
         for(let i = 0; i < lines.length; i++) {
             if (lines[i].length > 0) {
                 let json = JSON.parse(lines[i])
                 var imageParts = json.Image.split(':')
                 let state = json.State
-                if (json.Names === 'postgres') {
-                    let status: string = await readyDb()
-                    if (status.includes('rows')) {
-                        state = 'READY'
-                    } else {
-                        state = 'STARTING'
-                        setIsReady(false)
+                if (json.State === 'exited') {
+                    setIsError(resources.LIST.ALFRESCO_CONTAINERS_LIST_ERROR)
+                } else {
+                    if (json.Names === 'postgres') {
+                        let status: string = await readyDb()
+                        if (status.includes('rows')) {
+                            state = 'READY'
+                        } else {
+                            state = 'STARTING'
+                            setIsReady(false)
+                        }
+                    }
+                    if (json.Names === 'alfresco') {
+                        let status:string = await readyRepo()
+                        if (status === '200') {
+                            state = 'READY'
+                        } else {
+                            state = 'STARTING'
+                            setIsReady(false)
+                        }
+                    }
+                    if (json.Names === 'transform-core-aio') {
+                        let status:string = await readyTransform()
+                        if (status === '200') {
+                            state = 'READY'
+                        } else {
+                            state = 'STARTING'
+                            setIsReady(false)
+                        }
+                    }
+                    if (json.Names === 'activemq') {
+                        let status:string = await readyActiveMq()
+                        if (status === '200') {
+                            state = 'READY'
+                        } else {
+                            state = 'STARTING'
+                            setIsReady(false)
+                        }
+                    }
+                    if (json.Names === 'solr6') {
+                        let status:string = await readySolr()
+                        if (status === '200') {
+                            state = 'READY'
+                        } else {
+                            state = 'STARTING'
+                            setIsReady(false)
+                        }
                     }
                 }
-                if (json.Names === 'alfresco') {
-                    let status:string = await readyRepo()
-                    if (status === '200') {
-                        state = 'READY'
-                    } else {
-                        state = 'STARTING'
-                        setIsReady(false)
-                    }
-                }
-                if (json.Names === 'transform-core-aio') {
-                    let status:string = await readyTransform()
-                    if (status === '200') {
-                        state = 'READY'
-                    } else {
-                        state = 'STARTING'
-                        setIsReady(false)
-                    }
-                }
-                if (json.Names === 'activemq') {
-                    let status:string = await readyActiveMq()
-                    if (status === '200') {
-                        state = 'READY'
-                    } else {
-                        state = 'STARTING'
-                        setIsReady(false)
-                    }
-                }
-                if (json.Names === 'solr6') {
-                    let status:string = await readySolr()
-                    if (status === '200') {
-                        state = 'READY'
-                    } else {
-                        state = 'STARTING'
-                        setIsReady(false)
-                    }
-                }
-                rows.push(createData(imageParts[0], imageParts[1], json.Names, state, json.ID))
+                rows.push(createData(imageParts[0], imageParts[1], json.Names, state.toString().toUpperCase(), json.ID))
             }
         }
     } catch (err) {
         setIsError(err)
-    }
-
-    // All containers must be running
-    if (rows.length > 0 && rows.length < 5) {
-        const result = await stoppedContainersJson()
-        let lines = result.toString().split(/\r?\n|\r|\n/g);
-        for(let i = 0; i < lines.length; i++) {
-            if (lines[i].length > 0) {
-                let json = JSON.parse(lines[i])
-                let imageParts = json.Image.split(':')
-                rows.push(createData(imageParts[0], imageParts[1], json.Names, json.State.toString().toUpperCase(), json.ID))
-            }
-        }
-        setIsError(resources.LIST.ALFRESCO_CONTAINERS_LIST_ERROR)
     }
 
     return rows
@@ -188,7 +178,7 @@ export const DockerContainerList = () => {
                                     viewContainer(row.id)
                                 }}>
                                 { row.state === 'EXITED' && <ErrorIcon style={{ color: "red" }}/> }
-                                { row.state != 'EXITED' && <InfoIcon/> }
+                                { row.state !== 'EXITED' && <InfoIcon/> }
                             </Button>
                         </TableCell>
                         </TableRow>

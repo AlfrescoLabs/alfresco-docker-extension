@@ -40,26 +40,10 @@ export const getContainersRunning = async () => {
     }
 }
 
-export const runningContainersJson = async () => { 
+export const containerListJson = async () => { 
 
     const result = await ddClient.docker.cli.exec('ps', [
-        '-f', 'status=running',
-        '-f', 'name=alfresco',
-        '-f', 'name=postgres',
-        '-f', 'name=activemq',
-        '-f', 'name=transform-core-aio',
-        '-f', 'name=solr6',
-        '--no-trunc',
-        '--format', '"{{json .}}"'
-    ])
-    return result.stdout
-
-}
-
-export const stoppedContainersJson = async () => { 
-
-    const result = await ddClient.docker.cli.exec('ps', [
-        '-f', 'status=exited',
+        '-a',
         '-f', 'name=alfresco',
         '-f', 'name=postgres',
         '-f', 'name=activemq',
