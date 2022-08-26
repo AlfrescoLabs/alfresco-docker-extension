@@ -8,7 +8,7 @@ import { RAM_LIMIT } from '../helper/constants'
 export const DockerContainers = () => {
 
     const [ram, setRam] = React.useState(undefined)
-    const [architecture, setArchitecture] = React.useState(undefined)
+    const [architecture, setArchitecture] = React.useState('x86_64')
     useEffect(() => {
       (async () => {
           let info = await getDockerInfo()
