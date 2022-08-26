@@ -67,7 +67,7 @@ export const createNetwork = async () => {
 
 // Stop running containers in 'alfresco' network
 export const stopContainers  = async () => {
-    const containers = await ddClient.docker.cli.exec('ps', ['-qf', '"network=alfresco"'])
+    const containers = await ddClient.docker.cli.exec('ps', ['-a', '-qf', '"network=alfresco"'])
     await ddClient.docker.cli.exec('stop', containers.stdout.split(/\r?\n|\r|\n/g))
     await ddClient.docker.cli.exec('rm', containers.stdout.split(/\r?\n|\r|\n/g))
 }
@@ -170,7 +170,7 @@ export const deployRepository = async () => {
 
         await ddClient.docker.cli.exec('run', [
             '-d',
-            '--memory', '3072m',
+            '--memory', '3328m',
             '--name', 'alfresco',
             '-e', 'JAVA_TOOL_OPTIONS="-Dencryption.keystore.type=JCEKS -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding -Dencryption.keyAlgorithm=DESede -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore -Dmetadata-keystore.password=mp6yc0UD9e -Dmetadata-keystore.aliases=metadata -Dmetadata-keystore.metadata.password=oKIWzVdEdA -Dmetadata-keystore.metadata.algorithm=DESede"',
             '-e', 'JAVA_OPTS="-Ddb.driver=org.postgresql.Driver -Ddb.username=alfresco -Ddb.password=alfresco -Ddb.url=jdbc:postgresql://postgres:5432/alfresco -Dsolr.host=solr6 -Dsolr.port=8983 -Dsolr.http.connection.timeout=1000 -Dsolr.secureComms=secret -Dsolr.sharedSecret=secret -Dsolr.base.url=/solr -Dindex.subsystem.name=solr6 -Dshare.host=127.0.0.1 -Dshare.port=8080 -Dalfresco.host=localhost -Dalfresco.port=8080 -Daos.baseUrlOverwrite=http://localhost:8080/alfresco/aos -Dmessaging.broker.url=\'failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true\' -Ddeployment.method=DOCKER_COMPOSE -DlocalTransform.core-aio.url=http://transform-core-aio:8090/ -Dcsrf.filter.enabled=false -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"',
