@@ -36,3 +36,7 @@ It should now list **Alfresco** as one of the available extensions.
 Click on **Run** button to run **Alfresco** in Docker and use http://localhost:8080/alfresco URL in your browser once the deployment is ready.
 
 If you want to un-deploy Alfresco, click **Stop** button.
+
+## Known Issues
+
+* The extension doesn't work in Apple Silicon computers, since the Alfresco Docker Images are not available for that architecute
