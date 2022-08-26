@@ -9,17 +9,17 @@ export const refreshData = async () => {
 const ddClient = createDockerDesktopClient();
 
 // Return Docker available RAM in GB
-export const getRamAvailable = async () => {
+export const getDockerInfo = async () => {
     try {
         const result = await ddClient.docker.cli.exec('info', [
           '--format',
           '"{{json .}}"',
         ])
-        return ((result.parseJsonObject()?.MemTotal)/1024/1024/1024).toFixed(2)
+        return result.parseJsonObject()
       } catch (err) {
         console.log("checkRamAvailableError : ", JSON.stringify(err))
+        return err
     }
-    return 0;
 }
 
 // List of known containers running
