@@ -1,8 +1,9 @@
-import { Alert, AlertTitle, Box, Button, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
-import InfoIcon from '@mui/icons-material/Info';
-import React, { useEffect } from "react";
-import { blueGrey } from "@mui/material/colors";
-import { readyActiveMq, readyDb, readyRepo, readySolr, readyTransform, runningContainersJson, viewContainer } from "../helper/cli";
+import { Alert, AlertTitle, Box, Button, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material"
+import InfoIcon from '@mui/icons-material/Info'
+import ErrorIcon from '@mui/icons-material/Error'
+import React, { useEffect } from "react"
+import { blueGrey } from "@mui/material/colors"
+import { readyActiveMq, readyDb, readyRepo, readySolr, readyTransform, runningContainersJson, stoppedContainersJson, viewContainer } from "../helper/cli"
 import { resources } from '../helper/resources'
 
 function createData(
@@ -85,6 +86,15 @@ const getRows = async (
 
     // All containers must be running
     if (rows.length > 0 && rows.length < 5) {
+        const result = await stoppedContainersJson()
+        let lines = result.toString().split(/\r?\n|\r|\n/g);
+        for(let i = 0; i < lines.length; i++) {
+            if (lines[i].length > 0) {
+                let json = JSON.parse(lines[i])
+                let imageParts = json.Image.split(':')
+                rows.push(createData(imageParts[0], imageParts[1], json.Names, json.State.toString().toUpperCase(), json.ID))
+            }
+        }
         setIsError(resources.LIST.ALFRESCO_CONTAINERS_LIST_ERROR)
     }
 
@@ -177,7 +187,8 @@ export const DockerContainerList = () => {
                             <Button onClick={() => {
                                     viewContainer(row.id)
                                 }}>
-                                <InfoIcon/>
+                                { row.state === 'EXITED' && <ErrorIcon style={{ color: "red" }}/> }
+                                { row.state != 'EXITED' && <InfoIcon/> }
                             </Button>
                         </TableCell>
                         </TableRow>
