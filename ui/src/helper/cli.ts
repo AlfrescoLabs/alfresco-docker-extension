@@ -32,7 +32,8 @@ export const getContainersRunning = async () => {
             '-f', 'name=postgres',
             '-f', 'name=activemq',
             '-f', 'name=solr6',
-            '-f', 'name=transform-core-aio'
+            '-f', 'name=transform-core-aio',
+            '-f', 'network=alfresco'
         ])
         return result.stdout
     } catch (err) {
@@ -49,6 +50,7 @@ export const containerListJson = async () => {
         '-f', 'name=activemq',
         '-f', 'name=transform-core-aio',
         '-f', 'name=solr6',
+        '-f', 'network=alfresco',
         '--no-trunc',
         '--format', '"{{json .}}"'
     ])
@@ -76,7 +78,8 @@ export const stopContainers  = async () => {
 export const removeContainer = async (containerName: string) => {
     const result = await ddClient.docker.cli.exec('ps', [
         '-q', '-a',
-        '-f', 'name=' + containerName
+        '-f', 'name=' + containerName,
+        '-f', 'network=alfresco'
         ])
     if (result.stdout.length > 0) {
         await ddClient.docker.cli.exec('container', [
@@ -88,7 +91,7 @@ export const removeContainer = async (containerName: string) => {
 export const deployDb = async () => {
 
     const running = await ddClient.docker.cli.exec('ps', [
-        '-f', 'status=running', '-f', 'name=postgres', '-q'
+        '-f', 'status=running', '-f', 'name=postgres', '-f', 'network=alfresco', '-q'
     ])
 
     if (running.stdout.length === 0) {
@@ -115,7 +118,7 @@ export const deployDb = async () => {
 export const deployMq = async () => {
 
     const running = await ddClient.docker.cli.exec('ps', [
-        '-f', 'status=running', '-f', 'name=activemq', '-q'
+        '-f', 'status=running', '-f', 'name=activemq', '-f', 'network=alfresco', '-q'
     ])
 
     if (running.stdout.length === 0) {
@@ -138,7 +141,7 @@ export const deployMq = async () => {
 export const deployTransform = async () => {
 
     const running = await ddClient.docker.cli.exec('ps', [
-        '-f', 'status=running', '-f', 'name=transform-core-aio', '-q'
+        '-f', 'status=running', '-f', 'name=transform-core-aio', '-f', 'network=alfresco', '-q'
     ])
 
     if (running.stdout.length === 0) {
@@ -161,7 +164,7 @@ export const deployTransform = async () => {
 export const deployRepository = async () => {
 
     const running = await ddClient.docker.cli.exec('ps', [
-        '-f', 'status=running', '-f', 'name=alfresco', '-q'
+        '-f', 'status=running', '-f', 'name=alfresco', '-f', 'network=alfresco', '-q'
     ])
 
     if (running.stdout.length === 0) {
@@ -186,7 +189,7 @@ export const deployRepository = async () => {
 export const deploySolr = async () => {
     
     const running = await ddClient.docker.cli.exec('ps', [
-        '-f', 'status=running', '-f', 'name=solr6', '-q'
+        '-f', 'status=running', '-f', 'name=solr6', '-f', 'network=alfresco', '-q'
     ])
 
     if (running.stdout.length === 0) {
