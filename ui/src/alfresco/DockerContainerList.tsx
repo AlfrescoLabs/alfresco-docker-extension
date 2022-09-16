@@ -1,9 +1,9 @@
-import { Alert, AlertTitle, Box, Button, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material"
+import { Alert, AlertTitle, Box, Button, CircularProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material"
 import InfoIcon from '@mui/icons-material/Info'
 import ErrorIcon from '@mui/icons-material/Error'
 import React, { useEffect } from "react"
 import { blueGrey } from "@mui/material/colors"
-import { readyActiveMq, readyDb, readyRepo, readySolr, readyTransform, containerListJson, viewContainer } from "../helper/cli"
+import { openAlfrescoInBrowser, readyActiveMq, readyDb, readyRepo, readySolr, readyTransform, containerListJson, viewContainer } from "../helper/cli"
 import { resources } from '../helper/resources'
 
 function createData(
@@ -15,6 +15,10 @@ function createData(
   ) 
 {
     return { image, version, name, state, id };
+}
+
+const startAlfresco= async() => {
+    await openAlfrescoInBrowser();
 }
 
 const getRows = async (
@@ -119,12 +123,20 @@ export const DockerContainerList = () => {
             </Alert>
         </Box>
     } else if (isReady) {
-        statusComponent = <Box>
-                <Alert severity="success">
-                    <AlertTitle>{resources.LIST.ALFRESCO_READY_TITLE}</AlertTitle>
-                    {resources.LIST.ALFRESCO_READY_MESSAGE}
-                </Alert>
-            </Box>
+        statusComponent =
+        <React.Fragment>
+            <Stack direction="row" spacing={2}>
+                <Box>
+                    <Alert severity="success">
+                        <AlertTitle>{resources.LIST.ALFRESCO_READY_TITLE}</AlertTitle>
+                        {resources.LIST.ALFRESCO_READY_MESSAGE}
+                    </Alert>
+                </Box>
+                <Button variant="contained" onClick={() => { startAlfresco() }} >
+                    {resources.LIST.START}
+                </Button>
+            </Stack>
+            </React.Fragment>
     } else {
         statusComponent = <Box>
                 <Alert severity="warning">

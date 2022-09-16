@@ -291,3 +291,7 @@ export const viewContainer = async (id: string) => {
     await ddClient.desktopUI.navigate.viewContainer(id);
 };
 
+export const openAlfrescoInBrowser = async() => {
+    ddClient.host.openExternal('http://localhost:8080/alfresco')
+};
+
