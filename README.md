@@ -21,7 +21,9 @@ In Docker Desktop, go to `Preferences > Extensions` and check `Enable Docker Ext
 
 Since this Docker Extensions hasn't been yet published, it's required to build and deploy it locally from source code.
 
-Run the following command to build and install the local extension:
+Make sure that [Docker Desktop](https://www.docker.com/products/docker-desktop/) is running in the background. 
+
+Then run the following command to build and install the local extension:
 
 ```sh
 make install-extension
