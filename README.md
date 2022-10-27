@@ -6,12 +6,12 @@ Experimental Docker Extension to deploy Alfresco Stack using the Docker Desktop 
 
 Runtime Requirements:
 
-* [Docker Desktop 4.8.0 or later](https://www.docker.com/products/docker-desktop/) with Docker Extensions enabled
+- [Docker Desktop 4.8.0 or later](https://www.docker.com/products/docker-desktop/) with Docker Extensions enabled
 
 Development Recommendations:
 
-* [React reference](https://reactjs.org)
-* [Docker Extensions CLI](https://github.com/docker/extensions-sdk)
+- [React reference](https://reactjs.org)
+- [Docker Extensions CLI](https://github.com/docker/extensions-sdk)
 
 ## Enable Docker Extensions
 
@@ -21,13 +21,15 @@ In Docker Desktop, go to `Preferences > Extensions` and check `Enable Docker Ext
 
 Since this Docker Extensions hasn't been yet published, it's required to build and deploy it locally from source code.
 
-Make sure that [Docker Desktop](https://www.docker.com/products/docker-desktop/) is running in the background. 
+Make sure that [Docker Desktop](https://www.docker.com/products/docker-desktop/) is running in the background.
 
 Then run the following command to build and install the local extension:
 
 ```sh
 make install-extension
 ```
+
+> **Note** if the installation is not successful with the Error message `mounts denied: the path /run/guest-services/... is not shared from OS X` check if the "User gRPC FUSE file sharing" options is enable in Docker general settings.
 
 ## Using the Extension
 
@@ -41,4 +43,4 @@ If you want to un-deploy Alfresco, click **Stop** button.
 
 ## Known Issues
 
-* The extension doesn't work in Apple Silicon computers, since the Alfresco Docker Images are not available for that architecute
+- The extension doesn't work in Apple Silicon computers, since the Alfresco Docker Images are not available for that architecute
