@@ -29,7 +29,7 @@ Then run the following command to build and install the local extension:
 make install-extension
 ```
 
-> **Note** if the installation is not successful with the Error message `mounts denied: the path /run/guest-services/... is not shared from OS X` check if the "User gRPC FUSE file sharing" options is enable in Docker general settings.
+> **Note** if the installation is not successful with the Error message `mounts denied: the path /run/guest-services/... is not shared from OS X` check that "User gRPC FUSE file sharing" option is enable in Docker general settings.
 
 ## Using the Extension
 
