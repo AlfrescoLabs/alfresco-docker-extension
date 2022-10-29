@@ -55,6 +55,32 @@ async function getRows() {
   let errors = [];
   let rows = [];
 
+  function ifReturn200(restCall) {
+    return async () => {
+      let status: string = await restCall();
+      return status === '200';
+    };
+  }
+  function includeRows(restCall) {
+    return async () => {
+      let status: string = await restCall();
+      return status.includes('rows');
+    };
+  }
+  const readyCheckPolicies = {
+    postgres: includeRows(readyDb),
+    alfresco: ifReturn200(readyRepo),
+    'transform-core-aio': ifReturn200(readyTransform),
+    solr6: ifReturn200(readySolr),
+    activemq: ifReturn200(readyActiveMq),
+  };
+  function checkServiceStatus(name) {
+    let readyFn = readyCheckPolicies[name];
+    if (readyFn) {
+      return readyFn() ? 'READY' : 'STARTING';
+    }
+    return 'UNKNOWN STATUS';
+  }
   try {
     const result = await containerListJson();
     var lines = result.toString().split(/\r?\n|\r|\n/g);
@@ -66,51 +92,7 @@ async function getRows() {
         if (json.State === 'exited') {
           errors.push(resources.LIST.ALFRESCO_CONTAINERS_LIST_ERROR);
         } else {
-          if (json.Names === 'postgres') {
-            let status: string = await readyDb();
-            if (status.includes('rows')) {
-              state = 'READY';
-            } else {
-              state = 'STARTING';
-              ready = false;
-            }
-          }
-          if (json.Names === 'alfresco') {
-            let status: string = await readyRepo();
-            if (status === '200') {
-              state = 'READY';
-            } else {
-              state = 'STARTING';
-              ready = false;
-            }
-          }
-          if (json.Names === 'transform-core-aio') {
-            let status: string = await readyTransform();
-            if (status === '200') {
-              state = 'READY';
-            } else {
-              state = 'STARTING';
-              ready = false;
-            }
-          }
-          if (json.Names === 'activemq') {
-            let status: string = await readyActiveMq();
-            if (status === '200') {
-              state = 'READY';
-            } else {
-              state = 'STARTING';
-              ready = false;
-            }
-          }
-          if (json.Names === 'solr6') {
-            let status: string = await readySolr();
-            if (status === '200') {
-              state = 'READY';
-            } else {
-              state = 'STARTING';
-              ready = false;
-            }
-          }
+          state = checkServiceStatus(json.Names);
         }
         rows.push(
           createData(
