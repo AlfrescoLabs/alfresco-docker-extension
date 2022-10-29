@@ -30,7 +30,7 @@ import { resources } from '../helper/resources';
 const startAlfresco = async () => {
   await openAlfrescoInBrowser();
 };
-export interface ContainerDesc {
+export interface ServiceDescriptor {
   id: string;
   name: string;
   state: string;
@@ -41,7 +41,6 @@ export interface ContainerDesc {
 }
 
 async function getRows() {
-  let ready = true;
   let errors = [];
   let rows = [];
 
@@ -64,12 +63,13 @@ async function getRows() {
     solr6: ifReturn200(readySolr),
     activemq: ifReturn200(readyActiveMq),
   };
-  function checkServiceStatus(name) {
-    let readyFn = readyCheckPolicies[name];
+  async function checkServiceStatus(service: ServiceDescriptor) {
+    let readyFn = readyCheckPolicies[service.name];
     if (readyFn) {
-      return readyFn() ? 'READY' : 'STARTING';
+      let isR = await readyFn();
+      return isR ? 'READY' : service.state.toUpperCase();
     }
-    return 'UNKNOWN STATUS';
+    return 'UNKNOWN POLICY FOR' + service.name;
   }
 
   try {
@@ -78,7 +78,7 @@ async function getRows() {
       if (result[i].state === 'exited') {
         errors.push(resources.LIST.ALFRESCO_CONTAINERS_LIST_ERROR);
       } else {
-        result[i].state = checkServiceStatus(result[i].name);
+        result[i].state = await checkServiceStatus(result[i]);
       }
       rows.push(result[i]);
     }
@@ -87,7 +87,7 @@ async function getRows() {
     // TODO do be managed differently
   }
 
-  return { ready, rows, errors };
+  return { rows, errors };
 }
 
 export const DockerContainerList = () => {
@@ -102,7 +102,7 @@ export const DockerContainerList = () => {
     const loadContainers = async () => {
       let result = await getRows();
       if (!unmounted) {
-        setIsReady(result.ready);
+        setIsReady(result.rows.every((c) => c.state === 'READY'));
         if (result.errors.length > 0) {
           setIsError(result.errors[0]);
         }

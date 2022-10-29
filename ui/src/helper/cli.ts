@@ -6,7 +6,7 @@ import {
   SOLR_IMAGE_TAG,
   TRANSFORM_IMAGE_TAG,
 } from '../helper/constants';
-import { ContainerDesc } from '../alfresco/DockerContainerList';
+import { ServiceDescriptor } from '../alfresco/DockerContainerList';
 
 export const refreshData = async () => {
   window.location.reload();
@@ -77,7 +77,7 @@ export const containerListJson = async () => {
   return result.stdout;
 };
 
-function dockerAPIToContainerDesc(dockerAPIContainer): ContainerDesc {
+function dockerAPIToContainerDesc(dockerAPIContainer): ServiceDescriptor {
   const [imageName, imageTag] = dockerAPIContainer.Image.split(':');
   return {
     name: dockerAPIContainer.Names[0].substring(1),
@@ -89,14 +89,14 @@ function dockerAPIToContainerDesc(dockerAPIContainer): ContainerDesc {
     id: dockerAPIContainer.Id,
   };
 }
-export async function alfrescoContainers(): Promise<ContainerDesc[]> {
+export async function alfrescoContainers(): Promise<ServiceDescriptor[]> {
   let containerList = (await ddClient.docker.listContainers({
     filters: JSON.stringify({
       name: ['alfresco', 'postgres', 'activemq', 'solr6', 'transform-core-aio'],
       network: ['alfresco'],
     }),
   })) as any[];
-  const containers: ContainerDesc[] = containerList.map((e) => {
+  const containers: ServiceDescriptor[] = containerList.map((e) => {
     return dockerAPIToContainerDesc(e);
   });
   return containers;
