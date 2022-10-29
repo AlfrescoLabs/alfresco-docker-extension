@@ -80,12 +80,12 @@ export const containerListJson = async () => {
 function dockerAPIToContainerDesc(dockerAPIContainer): ContainerDesc {
   const [imageName, imageTag] = dockerAPIContainer.Image.split(':');
   return {
-    name: dockerAPIContainer.Name[0],
+    name: dockerAPIContainer.Names[0].substring(1),
     state: dockerAPIContainer.State,
     status: dockerAPIContainer.Status,
     image: dockerAPIContainer.Image,
     imageName,
-    imageTag,
+    version: imageTag,
     id: dockerAPIContainer.Id,
   };
 }
@@ -96,14 +96,10 @@ export async function alfrescoContainers(): Promise<ContainerDesc[]> {
       network: ['alfresco'],
     }),
   })) as any[];
-  //console.log(containerList);
-  containerList.map((e) => {
-    console.log(e.Names);
+  const containers: ContainerDesc[] = containerList.map((e) => {
     return dockerAPIToContainerDesc(e);
   });
-  //const rv = containerList.map(dockerAPIToContainerDesc);
-  //console.log(containerList);
-  return [];
+  return containers;
 }
 
 // Create 'alfresco' network if it didn't exist

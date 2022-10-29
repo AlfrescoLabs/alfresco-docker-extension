@@ -22,20 +22,10 @@ import {
   readyRepo,
   readySolr,
   readyTransform,
-  containerListJson,
   viewContainer,
+  alfrescoContainers,
 } from '../helper/cli';
 import { resources } from '../helper/resources';
-
-function createData(
-  image: string,
-  version: string,
-  name: string,
-  state: string,
-  id: string
-) {
-  return { image, version, name, state, id };
-}
 
 const startAlfresco = async () => {
   await openAlfrescoInBrowser();
@@ -47,7 +37,7 @@ export interface ContainerDesc {
   status: string;
   image: string;
   imageName: string;
-  imageTag: string;
+  version: string;
 }
 
 async function getRows() {
@@ -81,29 +71,16 @@ async function getRows() {
     }
     return 'UNKNOWN STATUS';
   }
+
   try {
-    const result = await containerListJson();
-    var lines = result.toString().split(/\r?\n|\r|\n/g);
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].length > 0) {
-        let json = JSON.parse(lines[i]);
-        var imageParts = json.Image.split(':');
-        let state = json.State;
-        if (json.State === 'exited') {
-          errors.push(resources.LIST.ALFRESCO_CONTAINERS_LIST_ERROR);
-        } else {
-          state = checkServiceStatus(json.Names);
-        }
-        rows.push(
-          createData(
-            imageParts[0],
-            imageParts[1],
-            json.Names,
-            state.toString().toUpperCase(),
-            json.ID
-          )
-        );
+    const result = await alfrescoContainers();
+    for (let i = 0; i < result.length; i++) {
+      if (result[i].state === 'exited') {
+        errors.push(resources.LIST.ALFRESCO_CONTAINERS_LIST_ERROR);
+      } else {
+        result[i].state = checkServiceStatus(result[i].name);
       }
+      rows.push(result[i]);
     }
   } catch (err) {
     console.log(err);
