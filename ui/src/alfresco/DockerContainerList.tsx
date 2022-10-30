@@ -3,7 +3,7 @@ import {
   AlertTitle,
   Box,
   Button,
-  CircularProgress,
+  Chip,
   Stack,
   Table,
   TableBody,
@@ -14,7 +14,6 @@ import {
 import InfoIcon from '@mui/icons-material/Info';
 import ErrorIcon from '@mui/icons-material/Error';
 import React, { useEffect } from 'react';
-import { blueGrey } from '@mui/material/colors';
 import {
   openAlfrescoInBrowser,
   readyActiveMq,
@@ -102,21 +101,38 @@ export const DockerContainerList = () => {
     const loadContainers = async () => {
       let result = await getRows();
       if (!unmounted) {
-        setIsReady(result.rows.every((c) => c.state === 'READY'));
+        setIsReady(
+          result.rows.length === 5 &&
+            result.rows.every((c) => c.state === 'READY')
+        );
         if (result.errors.length > 0) {
           setIsError(result.errors[0]);
         }
         setRows(result.rows);
-        setIsLoading(false);
+        //setIsLoading(false);
       }
     };
 
-    loadContainers();
+    if (rows.length === 0) loadContainers();
+
+    let timer;
+    if (!isReady) {
+      timer = setTimeout(loadContainers, 1500);
+    } else {
+      clearTimeout(timer);
+    }
     return () => {
       unmounted = true;
+      clearTimeout(timer);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
 
+  function colorForState(state) {
+    if (state === 'READY') return 'success';
+    if (state === 'EXITED') return 'error';
+    return 'warning';
+  }
   let statusComponent: {};
   let errorComponent: {};
   if (isError) {
@@ -149,89 +165,66 @@ export const DockerContainerList = () => {
         </Stack>
       </React.Fragment>
     );
-  } else {
-    statusComponent = (
-      <Box>
-        <Alert severity="warning">
-          <AlertTitle>{resources.LIST.ALFRESCO_STARTING_TITLE}</AlertTitle>
-          {resources.LIST.ALFRESCO_STARTING_MESSAGE}
-        </Alert>
-      </Box>
-    );
   }
-
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          marginBottom: '15px',
-          textAlign: 'center',
-        }}
-      >
-        <CircularProgress
-          size={50}
-          sx={{
-            color: blueGrey[500],
-          }}
-        />
-      </Box>
-    );
-  } else if (rows.length === 0) {
-    return <React.Fragment></React.Fragment>;
-  } else {
-    return (
-      <React.Fragment>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <b>{resources.LIST.IMAGE}</b>
+  return (
+    <React.Fragment>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>
+              <b>{resources.LIST.IMAGE}</b>
+            </TableCell>
+            <TableCell>
+              <b>{resources.LIST.VERSION}</b>
+            </TableCell>
+            <TableCell>
+              <b>{resources.LIST.NAME}</b>
+            </TableCell>
+            <TableCell align="center">
+              <b>{resources.LIST.STATUS}</b>
+            </TableCell>
+            <TableCell align="center">
+              <b>{resources.LIST.DETAILS}</b>
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow
+              key={row.image}
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            >
+              <TableCell component="th" scope="row">
+                {row.image}
               </TableCell>
-              <TableCell>
-                <b>{resources.LIST.VERSION}</b>
-              </TableCell>
-              <TableCell>
-                <b>{resources.LIST.NAME}</b>
-              </TableCell>
+              <TableCell>{row.version}</TableCell>
+              <TableCell>{row.name}</TableCell>
               <TableCell align="center">
-                <b>{resources.LIST.STATUS}</b>
+                <Chip
+                  label={row.state}
+                  color={colorForState(row.state)}
+                  variant="filled"
+                  size="small"
+                />
               </TableCell>
-              <TableCell align="center">
-                <b>{resources.LIST.DETAILS}</b>
+              <TableCell align="right">
+                <Button
+                  onClick={() => {
+                    viewContainer(row.id);
+                  }}
+                >
+                  {row.state === 'EXITED' && (
+                    <ErrorIcon style={{ color: 'red' }} />
+                  )}
+                  {row.state !== 'EXITED' && <InfoIcon />}
+                </Button>
               </TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow
-                key={row.image}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-              >
-                <TableCell component="th" scope="row">
-                  {row.image}
-                </TableCell>
-                <TableCell>{row.version}</TableCell>
-                <TableCell>{row.name}</TableCell>
-                <TableCell align="center">{row.state}</TableCell>
-                <TableCell align="right">
-                  <Button
-                    onClick={() => {
-                      viewContainer(row.id);
-                    }}
-                  >
-                    {row.state === 'EXITED' && (
-                      <ErrorIcon style={{ color: 'red' }} />
-                    )}
-                    {row.state !== 'EXITED' && <InfoIcon />}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {statusComponent}
-        {errorComponent}
-      </React.Fragment>
-    );
-  }
+          ))}
+        </TableBody>
+      </Table>
+      {statusComponent}
+      {errorComponent}
+    </React.Fragment>
+  );
 };

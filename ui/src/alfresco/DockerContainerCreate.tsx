@@ -21,9 +21,9 @@ import {
   deployRepository,
   deployTransform,
   waitTillReadyDb,
-  refreshData,
   stopContainers,
   deploySolr,
+  refreshData,
 } from '../helper/cli';
 import { resources } from '../helper/resources';
 
