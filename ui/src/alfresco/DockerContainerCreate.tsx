@@ -14,8 +14,8 @@ import React, { useState, useEffect } from 'react';
 import { DockerContainerList } from './DockerContainerList';
 import { blueGrey } from '@mui/material/colors';
 import {
-  getContainersRunning,
   createNetwork,
+  alfrescoContainers,
   deployDb,
   deployMq,
   deployRepository,
@@ -86,7 +86,7 @@ const clickStopButton = async (
 };
 
 export const DockerContainerCreate = () => {
-  const [containers, setContainers] = useState('');
+  const [containers, setContainers] = useState([]);
   const [startButton, setStartButton] = useState('Run');
   const [startButtonDisable, setStartButtonDisable] = useState(false);
   const [stopButton, setStopButton] = useState('Stop');
@@ -98,7 +98,8 @@ export const DockerContainerCreate = () => {
   useEffect(() => {
     (async () => {
       setIsLoading(true);
-      let containers = await getContainersRunning();
+      console.log('In Container Create');
+      let containers = await alfrescoContainers();
       setContainers(containers);
       setIsLoading(false);
     })();

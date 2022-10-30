@@ -8,7 +8,6 @@ import React from 'react';
 
 export const App = () => {
   const isDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
   return (
     <DockerMuiThemeProvider>
       <CssBaseline />

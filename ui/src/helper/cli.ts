@@ -5,8 +5,9 @@ import {
   REPO_IMAGE_TAG,
   SOLR_IMAGE_TAG,
   TRANSFORM_IMAGE_TAG,
+  ServiceDescriptor,
+  alfrescoServices,
 } from '../helper/constants';
-import { ServiceDescriptor } from '../alfresco/DockerContainerList';
 
 export const refreshData = async () => {
   window.location.reload();
@@ -29,54 +30,6 @@ export const getDockerInfo = async () => {
   }
 };
 
-// List of known containers running
-export const getContainersRunning = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('ps', [
-      '-q',
-      '-f',
-      'status=running',
-      '-f',
-      'name=alfresco',
-      '-f',
-      'name=postgres',
-      '-f',
-      'name=activemq',
-      '-f',
-      'name=solr6',
-      '-f',
-      'name=transform-core-aio',
-      '-f',
-      'network=alfresco',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    return JSON.stringify(err);
-  }
-};
-
-export const containerListJson = async () => {
-  const result = await ddClient.docker.cli.exec('ps', [
-    '-a',
-    '-f',
-    'name=alfresco',
-    '-f',
-    'name=postgres',
-    '-f',
-    'name=activemq',
-    '-f',
-    'name=transform-core-aio',
-    '-f',
-    'name=solr6',
-    '-f',
-    'network=alfresco',
-    '--no-trunc',
-    '--format',
-    '"{{json .}}"',
-  ]);
-  return result.stdout;
-};
-
 function dockerAPIToContainerDesc(dockerAPIContainer): ServiceDescriptor {
   const [imageName, imageTag] = dockerAPIContainer.Image.split(':');
   return {
@@ -91,11 +44,13 @@ function dockerAPIToContainerDesc(dockerAPIContainer): ServiceDescriptor {
 }
 export async function alfrescoContainers(): Promise<ServiceDescriptor[]> {
   let containerList = (await ddClient.docker.listContainers({
+    all: true,
     filters: JSON.stringify({
-      name: ['alfresco', 'postgres', 'activemq', 'solr6', 'transform-core-aio'],
+      name: alfrescoServices,
       network: ['alfresco'],
     }),
   })) as any[];
+
   const containers: ServiceDescriptor[] = containerList.map((e) => {
     return dockerAPIToContainerDesc(e);
   });
@@ -140,7 +95,7 @@ export const removeContainer = async (containerName: string) => {
   }
 };
 
-export const deployDb = async () => {
+export async function deployDb() {
   const running = await ddClient.docker.cli.exec('ps', [
     '-f',
     'status=running',
@@ -174,7 +129,7 @@ export const deployDb = async () => {
       'postgres -c max_connections=200 -c logging_collector=on -c log_min_messages=LOG -c log_directory=/var/log/postgresql',
     ]);
   }
-};
+}
 
 export const deployMq = async () => {
   const running = await ddClient.docker.cli.exec('ps', [

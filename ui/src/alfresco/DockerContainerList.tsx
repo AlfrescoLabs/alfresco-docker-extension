@@ -13,138 +13,64 @@ import {
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import ErrorIcon from '@mui/icons-material/Error';
-import React, { useEffect } from 'react';
-import {
-  openAlfrescoInBrowser,
-  readyActiveMq,
-  readyDb,
-  readyRepo,
-  readySolr,
-  readyTransform,
-  viewContainer,
-  alfrescoContainers,
-} from '../helper/cli';
+import React, { useEffect, useReducer } from 'react';
+import { viewContainer, openAlfrescoInBrowser } from '../helper/cli';
 import { resources } from '../helper/resources';
+import {
+  serviceReducer,
+  defaultAlfrescoState,
+  getAlfrescoServices,
+} from './alfrescoServices';
+import { ContainerState } from '../helper/constants';
 
 const startAlfresco = async () => {
   await openAlfrescoInBrowser();
 };
-export interface ServiceDescriptor {
-  id: string;
-  name: string;
-  state: string;
-  status: string;
-  image: string;
-  imageName: string;
-  version: string;
+
+function colorForState(state: ContainerState) {
+  if (state === 'READY') return 'success';
+  if (state === 'EXITED') return 'error';
+  if (state === 'INACTIVE') return 'secondary';
+  return 'warning';
 }
 
-async function getRows() {
-  let errors = [];
-  let rows = [];
-
-  function ifReturn200(restCall) {
-    return async () => {
-      let status: string = await restCall();
-      return status === '200';
-    };
-  }
-  function includeRows(restCall) {
-    return async () => {
-      let status: string = await restCall();
-      return status.includes('rows');
-    };
-  }
-  const readyCheckPolicies = {
-    postgres: includeRows(readyDb),
-    alfresco: ifReturn200(readyRepo),
-    'transform-core-aio': ifReturn200(readyTransform),
-    solr6: ifReturn200(readySolr),
-    activemq: ifReturn200(readyActiveMq),
-  };
-  async function checkServiceStatus(service: ServiceDescriptor) {
-    let readyFn = readyCheckPolicies[service.name];
-    if (readyFn) {
-      let isR = await readyFn();
-      return isR ? 'READY' : service.state.toUpperCase();
-    }
-    return 'UNKNOWN POLICY FOR' + service.name;
-  }
-
-  try {
-    const result = await alfrescoContainers();
-    for (let i = 0; i < result.length; i++) {
-      if (result[i].state === 'exited') {
-        errors.push(resources.LIST.ALFRESCO_CONTAINERS_LIST_ERROR);
-      } else {
-        result[i].state = await checkServiceStatus(result[i]);
-      }
-      rows.push(result[i]);
-    }
-  } catch (err) {
-    console.log(err);
-    // TODO do be managed differently
-  }
-
-  return { rows, errors };
-}
-
-export const DockerContainerList = () => {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isReady, setIsReady] = React.useState(false);
-  const [isError, setIsError] = React.useState('');
-  const [rows, setRows] = React.useState([]);
+export const DockerContainerList = (props) => {
+  const [alfresco, dispatch] = useReducer(
+    serviceReducer,
+    defaultAlfrescoState()
+  );
 
   useEffect(() => {
     let unmounted = false;
-    setIsLoading(true);
-    const loadContainers = async () => {
-      let result = await getRows();
+    const refreshContainers = async () => {
+      let result = await getAlfrescoServices();
+      console.log('refresh config');
+      console.log(alfresco.alfState);
       if (!unmounted) {
-        setIsReady(
-          result.rows.length === 5 &&
-            result.rows.every((c) => c.state === 'READY')
-        );
-        if (result.errors.length > 0) {
-          setIsError(result.errors[0]);
-        }
-        setRows(result.rows);
-        //setIsLoading(false);
+        dispatch({ type: 'UPDATE_SERVICE_STATE', data: result });
       }
     };
-
-    if (rows.length === 0) loadContainers();
-
     let timer;
-    if (!isReady) {
-      timer = setTimeout(loadContainers, 1500);
-    } else {
-      clearTimeout(timer);
-    }
+    timer = setTimeout(refreshContainers, 1500);
+    if (alfresco.alfState === 'IDLE') clearTimeout(timer);
     return () => {
       unmounted = true;
       clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows]);
+  }, [alfresco]);
 
-  function colorForState(state) {
-    if (state === 'READY') return 'success';
-    if (state === 'EXITED') return 'error';
-    return 'warning';
-  }
   let statusComponent: {};
   let errorComponent: {};
-  if (isError) {
+  if (alfresco.alfState === 'ERROR') {
     errorComponent = (
       <Box>
         <Alert severity="error">
           <AlertTitle>ERROR</AlertTitle>
-          {isError}
+          {alfresco.errors}
         </Alert>
       </Box>
     );
-  } else if (isReady) {
+  } else if (alfresco.alfState === 'READY') {
     statusComponent = (
       <React.Fragment>
         <Stack direction="row" spacing={2}>
@@ -189,20 +115,20 @@ export const DockerContainerList = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.map((row) => (
+          {alfresco.services.map((s) => (
             <TableRow
-              key={row.image}
+              key={s.image}
               sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
               <TableCell component="th" scope="row">
-                {row.image}
+                {s.image}
               </TableCell>
-              <TableCell>{row.version}</TableCell>
-              <TableCell>{row.name}</TableCell>
+              <TableCell>{s.version}</TableCell>
+              <TableCell>{s.name}</TableCell>
               <TableCell align="center">
                 <Chip
-                  label={row.state}
-                  color={colorForState(row.state)}
+                  label={s.state}
+                  color={colorForState(s.state)}
                   variant="filled"
                   size="small"
                 />
@@ -210,13 +136,13 @@ export const DockerContainerList = () => {
               <TableCell align="right">
                 <Button
                   onClick={() => {
-                    viewContainer(row.id);
+                    viewContainer(s.id);
                   }}
                 >
-                  {row.state === 'EXITED' && (
+                  {s.state === 'EXITED' && (
                     <ErrorIcon style={{ color: 'red' }} />
                   )}
-                  {row.state !== 'EXITED' && <InfoIcon />}
+                  {s.state !== 'EXITED' && <InfoIcon />}
                 </Button>
               </TableCell>
             </TableRow>
