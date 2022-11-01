@@ -8,11 +8,6 @@ import {
   ServiceDescriptor,
   alfrescoServices,
 } from '../helper/constants';
-
-export const refreshData = async () => {
-  window.location.reload();
-};
-
 // DOCKER DESKTOP Client
 const ddClient = createDockerDesktopClient();
 
@@ -34,7 +29,7 @@ function dockerAPIToContainerDesc(dockerAPIContainer): ServiceDescriptor {
   const [imageName, imageTag] = dockerAPIContainer.Image.split(':');
   return {
     name: dockerAPIContainer.Names[0].substring(1),
-    state: dockerAPIContainer.State,
+    state: dockerAPIContainer.State.toUpperCase(),
     status: dockerAPIContainer.Status,
     image: dockerAPIContainer.Image,
     imageName,

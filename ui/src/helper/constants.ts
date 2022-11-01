@@ -8,11 +8,6 @@ export const REPO_IMAGE_TAG =
   'alfresco/alfresco-content-repository-community:7.2.0';
 export const SOLR_IMAGE_TAG = 'alfresco/alfresco-search-services:2.0.3';
 
-export interface ServiceStore {
-  alfState: AlfState;
-  services: ServiceDescriptor[];
-  errors: string[];
-}
 export interface ServiceDescriptor {
   id: string;
   name: string;
@@ -24,13 +19,13 @@ export interface ServiceDescriptor {
 }
 export const alfrescoServices = [
   'alfresco',
-  'postgres',
-  'activemq',
   'solr6',
   'transform-core-aio',
+  'activemq',
+  'postgres',
 ];
 export type ContainerState =
-  | 'INACTIVE'
+  | 'NO_CONTAINER'
   | 'RUNNING'
   | 'READY'
   | 'CREATED'
@@ -39,14 +34,3 @@ export type ContainerState =
   | 'PAUSED'
   | 'EXITED'
   | 'DEAD';
-
-export type AlfState =
-  | 'IDLE'
-  | 'PULLING_IMAGES'
-  | 'IMAGE_READY'
-  | 'STARTING'
-  | 'READY'
-  | 'ERROR'
-  | 'STOPPING'
-  | 'EXITED'
-  | 'CLEANING';

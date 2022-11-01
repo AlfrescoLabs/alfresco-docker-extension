@@ -1,4 +1,4 @@
-import { Box, Stack, Alert, AlertTitle } from '@mui/material';
+import { Box, Stack, Alert, AlertTitle, colors } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { DockerContainerCreate } from './DockerContainerCreate';
 import { getDockerInfo } from '../helper/cli';
@@ -46,6 +46,7 @@ export const DockerContainers = () => {
   return (
     <Stack direction="column" spacing={2}>
       <Box>{resources.HOME.TITLE}</Box>
+
       {preconditions
         .filter((p) => p.cond(dockerInfo) === false)
         .map((fp) => (

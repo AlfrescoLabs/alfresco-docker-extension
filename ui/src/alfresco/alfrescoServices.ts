@@ -1,6 +1,3 @@
-import { ResetTvOutlined } from '@mui/icons-material';
-import { stat } from 'fs';
-import { start } from 'repl';
 import {
   readyActiveMq,
   readyDb,
@@ -8,7 +5,16 @@ import {
   readySolr,
   readyTransform,
   alfrescoContainers,
+  createNetwork,
+  deployDb,
+  deployMq,
+  deployTransform,
+  deploySolr,
+  waitTillReadyDb,
+  deployRepository,
+  stopContainers,
 } from '../helper/cli';
+
 import {
   ACTIVEMQ_IMAGE_TAG,
   POSTGRES_IMAGE_TAG,
@@ -16,17 +22,36 @@ import {
   SOLR_IMAGE_TAG,
   TRANSFORM_IMAGE_TAG,
   ServiceDescriptor,
-  ServiceStore,
-  AlfState,
   ContainerState,
 } from '../helper/constants';
+
+export const AlfrescoStates = Object.freeze({
+  NOT_ACTIVE: 'NOT_ACTIVE',
+  //INSTALLING: 'INSTALLING',
+  STARTING: 'STARTING',
+  UP_AND_RUNNING: 'UP_AND_RUNNING',
+  STOPPING: 'STOPPING',
+  ERROR: 'ERROR',
+});
+export type AlfrescoState = keyof typeof AlfrescoStates;
+
+export interface ServiceStore {
+  alfrescoState: AlfrescoState;
+  services: ServiceDescriptor[];
+  errors: string[];
+}
+export type Action = {
+  type: string;
+  payload?: any;
+  error?: string;
+};
 
 function emptyServiceDescFor(name: string, image: string): ServiceDescriptor {
   let [imageName, version] = image.split(':');
   return {
     id: '',
     name: name,
-    state: 'INACTIVE',
+    state: 'NO_CONTAINER',
     status: '',
     image: image,
     imageName,
@@ -35,10 +60,17 @@ function emptyServiceDescFor(name: string, image: string): ServiceDescriptor {
 }
 
 export const actions = ['RUN_SERVICES', 'STOP_SERVICES'];
-
+export const AppStateQueries = {
+  canRun: (state: AlfrescoState) => {
+    return state === AlfrescoStates.NOT_ACTIVE;
+  },
+  isLoading: (state: AlfrescoState) => state === AlfrescoStates.STARTING,
+  isReady: (state: AlfrescoState) => state === AlfrescoStates.UP_AND_RUNNING,
+  isStopping: (state: AlfrescoState) => state === AlfrescoStates.STOPPING,
+};
 export function defaultAlfrescoState(): ServiceStore {
   return {
-    alfState: 'IDLE',
+    alfrescoState: AlfrescoStates.NOT_ACTIVE,
     services: [
       emptyServiceDescFor('alfresco', REPO_IMAGE_TAG),
       emptyServiceDescFor('postgres', POSTGRES_IMAGE_TAG),
@@ -50,63 +82,94 @@ export function defaultAlfrescoState(): ServiceStore {
   };
 }
 
+const runContainers = async () => {
+  await createNetwork();
+  await deployDb();
+  await deployMq();
+  await deployTransform();
+  await deploySolr();
+
+  await waitTillReadyDb();
+  await deployRepository();
+};
+
 function updateStateWith(state: ServiceStore, data: ServiceDescriptor[]) {
   for (let curr of state.services) {
+    let contState: ContainerState = 'NO_CONTAINER';
     for (let s of data) {
-      let isPresent = false;
       if (curr.name === s.name) {
-        curr.state = s.state;
+        contState = s.state;
         curr.status = s.status;
-        isPresent = true;
         break;
       }
-      if (!isPresent) curr.state = 'INACTIVE';
     }
+    curr.state = contState;
   }
 }
 
 function updateAlfrescoAppState(state: ServiceStore) {
   if (state.services.every((c) => c.state === 'READY')) {
-    state.alfState = 'READY';
+    state.alfrescoState = AlfrescoStates.UP_AND_RUNNING;
     return;
   }
 
-  if (state.services.every((c) => c.state === 'INACTIVE')) {
-    state.alfState = 'IDLE';
+  if (state.services.every((c) => c.state === 'NO_CONTAINER')) {
+    state.alfrescoState = AlfrescoStates.NOT_ACTIVE;
     return;
   }
 
-  if (
-    state.services.some(
-      (c) =>
-        c.state === 'DEAD' || c.state === 'EXITED' || c.state === 'INACTIVE'
-    )
-  ) {
-    state.alfState = 'ERROR';
-    return;
+  if (state.alfrescoState !== AlfrescoStates.STOPPING) {
+    if (state.services.some((c) => c.state === 'RUNNING')) {
+      state.alfrescoState = AlfrescoStates.STARTING;
+      return;
+    }
+    if (
+      state.services.some(
+        (c) =>
+          c.state === 'DEAD' ||
+          c.state === 'EXITED' ||
+          c.state === 'NO_CONTAINER'
+      )
+    ) {
+      state.alfrescoState = AlfrescoStates.ERROR;
+      return;
+    }
   }
 }
 
-export function serviceReducer(state, action): ServiceStore {
+export function serviceReducer(
+  state: ServiceStore,
+  action: Action
+): ServiceStore {
   console.log(action);
   let newState: ServiceStore = { ...state };
   switch (action.type) {
-    case 'UPDATE_SERVICE_STATE': {
-      updateStateWith(newState, action.data);
+    case 'REFRESH_SERVICE_STATE': {
+      updateStateWith(newState, action.payload);
       updateAlfrescoAppState(newState);
+      return newState;
+    }
+    case 'START_ALFRESCO': {
+      newState.alfrescoState = AlfrescoStates.STARTING;
+      runContainers();
+      return newState;
+    }
+    case 'STOP_ALFRESCO': {
+      newState.alfrescoState = AlfrescoStates.STOPPING;
+      stopContainers();
       return newState;
     }
   }
   return defaultAlfrescoState();
 }
 
-function ifReturn200(restCall) {
+function isReturning200(restCall) {
   return async () => {
     let status: string = await restCall();
     return status === '200';
   };
 }
-function includeRows(restCall) {
+function isReturningRows(restCall) {
   return async () => {
     let status: string = await restCall();
     return status.includes('rows');
@@ -114,11 +177,11 @@ function includeRows(restCall) {
 }
 
 const readyCheckPolicies = {
-  postgres: includeRows(readyDb),
-  alfresco: ifReturn200(readyRepo),
-  'transform-core-aio': ifReturn200(readyTransform),
-  solr6: ifReturn200(readySolr),
-  activemq: ifReturn200(readyActiveMq),
+  postgres: isReturningRows(readyDb),
+  alfresco: isReturning200(readyRepo),
+  'transform-core-aio': isReturning200(readyTransform),
+  solr6: isReturning200(readySolr),
+  activemq: isReturning200(readyActiveMq),
 };
 async function checkServiceStatus(
   service: ServiceDescriptor
@@ -137,7 +200,8 @@ export async function getAlfrescoServices() {
     services = await alfrescoContainers();
 
     for (let i = 0; i < services.length; i++) {
-      services[i].state = await checkServiceStatus(services[i]);
+      if (services[i].state === 'RUNNING')
+        services[i].state = await checkServiceStatus(services[i]);
     }
     return services;
   } catch (err) {
