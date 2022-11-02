@@ -45,7 +45,7 @@ If you want to un-deploy Alfresco, click **Stop** button.
 
 - The extension doesn't work in Apple Silicon computers, since the Alfresco Docker Images are not available for that architecture
 
-## Quick notes to get started
+## Quick notes to get started with Development
 
 To view the Devtools while developing an extension run: `docker extension dev debug angelborroy/alfresco-extension`
 

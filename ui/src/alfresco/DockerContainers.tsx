@@ -1,5 +1,5 @@
 import { Box, Stack, Alert, AlertTitle, colors } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DockerContainerCreate } from './DockerContainerCreate';
 import { getDockerInfo } from '../helper/cli';
 import { resources } from '../helper/resources';
