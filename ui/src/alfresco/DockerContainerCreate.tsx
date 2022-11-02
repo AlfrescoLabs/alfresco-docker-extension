@@ -102,7 +102,7 @@ export const DockerContainerCreate = () => {
 
   // refresh every 1.5 secs to check state
   useEffect(() => {
-    let timer = setTimeout(refreshContainers, 1500);
+    let timer = setTimeout(refreshContainers, 2000);
     if (alfresco.alfrescoState === AlfrescoStates.NOT_ACTIVE)
       clearTimeout(timer);
     return () => {

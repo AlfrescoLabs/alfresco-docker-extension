@@ -25,19 +25,19 @@ export const getDockerInfo = async () => {
   }
 };
 
-function dockerAPIToContainerDesc(dockerAPIContainer): ServiceDescriptor {
-  const [imageName, imageTag] = dockerAPIContainer.Image.split(':');
-  return {
-    name: dockerAPIContainer.Names[0].substring(1),
-    state: dockerAPIContainer.State.toUpperCase(),
-    status: dockerAPIContainer.Status,
-    image: dockerAPIContainer.Image,
-    imageName,
-    version: imageTag,
-    id: dockerAPIContainer.Id,
-  };
-}
 export async function alfrescoContainers(): Promise<ServiceDescriptor[]> {
+  function dockerAPIToContainerDesc(dockerAPIContainer): ServiceDescriptor {
+    const [imageName, imageTag] = dockerAPIContainer.Image.split(':');
+    return {
+      name: dockerAPIContainer.Names[0].substring(1),
+      state: dockerAPIContainer.State.toUpperCase(),
+      status: dockerAPIContainer.Status,
+      image: dockerAPIContainer.Image,
+      imageName,
+      version: imageTag,
+      id: dockerAPIContainer.Id,
+    };
+  }
   let containerList = (await ddClient.docker.listContainers({
     all: true,
     filters: JSON.stringify({
@@ -335,6 +335,7 @@ export const waitTillReadyDb = async () => {
 };
 
 export const viewContainer = async (id: string) => {
+  console.log('view: ' + id);
   await ddClient.desktopUI.navigate.viewContainer(id);
 };
 

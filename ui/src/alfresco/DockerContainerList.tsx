@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Chip,
-  colors,
   Stack,
   Table,
   TableBody,
@@ -68,6 +67,7 @@ const ContainerStatus = ({ containerState }) => {
     <Chip label={containerState} color="info" variant="filled" size="small" />
   );
 };
+
 export const DockerContainerList = ({
   alfresco,
 }: {
@@ -114,7 +114,8 @@ export const DockerContainerList = ({
                   <InfoIcon style={{ color: 'gray' }} />
                 ) : (
                   <Button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       viewContainer(s.id);
                     }}
                   >

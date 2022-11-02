@@ -94,18 +94,25 @@ const runContainers = async () => {
   await deployRepository();
 };
 
-function updateStateWith(state: ServiceStore, data: ServiceDescriptor[]) {
+function updateStateWith(
+  data: ServiceDescriptor[],
+  state: ServiceStore
+): ServiceStore {
   for (let curr of state.services) {
     let contState: ContainerState = 'NO_CONTAINER';
-    for (let s of data) {
-      if (curr.name === s.name) {
-        contState = s.state;
-        curr.status = s.status;
+
+    for (let container of data) {
+      if (curr.name === container.name) {
+        curr.id = container.id;
+        contState = container.state;
+        curr.state = container.state;
+        curr.status = container.status;
         break;
       }
     }
     curr.state = contState;
   }
+  return state;
 }
 
 function updateAlfrescoAppState(state: ServiceStore) {
@@ -152,8 +159,7 @@ export function serviceReducer(
   let newState: ServiceStore = { ...state, errors: [] };
   switch (action.type) {
     case 'REFRESH_SERVICE_STATE': {
-      updateStateWith(newState, action.payload);
-      updateAlfrescoAppState(newState);
+      updateAlfrescoAppState(updateStateWith(action.payload, newState));
       return newState;
     }
     case 'START_ALFRESCO': {
@@ -183,37 +189,36 @@ function isReturningRows(restCall) {
   };
 }
 
-const readyCheckPolicies = {
-  postgres: isReturningRows(readyDb),
-  alfresco: isReturning200(readyRepo),
-  'transform-core-aio': isReturning200(readyTransform),
-  solr6: isReturning200(readySolr),
-  activemq: isReturning200(readyActiveMq),
-};
-async function checkServiceStatus(
-  service: ServiceDescriptor
-): Promise<ContainerState> {
+async function isReady(service: ServiceDescriptor): Promise<boolean> {
+  const readyCheckPolicies = {
+    postgres: isReturningRows(readyDb),
+    alfresco: isReturning200(readyRepo),
+    'transform-core-aio': isReturning200(readyTransform),
+    solr6: isReturning200(readySolr),
+    activemq: isReturning200(readyActiveMq),
+  };
+
   let readyFn = readyCheckPolicies[service.name];
   let isR = false;
   if (readyFn) {
     isR = await readyFn();
   }
-  return isR ? 'READY' : service.state;
+  return isR;
 }
 
 export async function getAlfrescoServices() {
   let services = [];
   try {
     services = await alfrescoContainers();
-
     for (let i = 0; i < services.length; i++) {
       if (services[i].state === 'RUNNING')
-        services[i].state = await checkServiceStatus(services[i]);
+        services[i].state = (await isReady(services[i]))
+          ? 'READY'
+          : services[i].state;
     }
     return services;
   } catch (err) {
     console.log(err);
-    // TODO do be managed differently
   }
   return services;
 }
