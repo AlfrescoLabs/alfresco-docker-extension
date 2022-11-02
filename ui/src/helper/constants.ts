@@ -24,6 +24,7 @@ export const alfrescoServices = [
   'activemq',
   'postgres',
 ];
+
 export type ContainerState =
   | 'NO_CONTAINER'
   | 'RUNNING'

@@ -1,12 +1,12 @@
-import { Box, Stack, Alert, AlertTitle, colors } from '@mui/material';
+import { Box, Stack, Alert, AlertTitle } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { DockerContainerCreate } from './DockerContainerCreate';
 import { getDockerInfo } from '../helper/cli';
 import { resources } from '../helper/resources';
 import { RAM_LIMIT } from '../helper/constants';
 
-const enoughRAM = (dockerInfo) => dockerInfo.RAM >= RAM_LIMIT;
-const rightArch = (dockerInfo) => dockerInfo.arch === 'x86_64';
+const enoughRAM = (dockerInfo: DockerInfo) => dockerInfo.RAM >= RAM_LIMIT;
+const rightArch = (dockerInfo: DockerInfo) => dockerInfo.arch === 'x86_64';
 
 const preconditions = [
   {
@@ -15,7 +15,7 @@ const preconditions = [
     message: (info) => (
       <div>
         {resources.HOME.RAM_ALERT_MESSAGE} <br />{' '}
-        {resources.HOME.RAM_AVAILABLE_MESSAGE + info.RAM}
+        {resources.HOME.RAM_AVAILABLE_MESSAGE + info.RAM.toFixed(2)}
       </div>
     ),
   },
@@ -26,10 +26,13 @@ const preconditions = [
       'Architecture ' + info.arch + ' is not supported by this extension!',
   },
 ];
-
+type DockerInfo = {
+  RAM: number;
+  arch: 'x86_64' | 'ARM_64';
+};
 export const DockerContainers = () => {
-  const [dockerInfo, setDockerInfo] = useState({
-    RAM: RAM_LIMIT.toString(),
+  const [dockerInfo, setDockerInfo] = useState<DockerInfo>({
+    RAM: RAM_LIMIT,
     arch: 'x86_64',
   });
 
@@ -37,7 +40,7 @@ export const DockerContainers = () => {
     let info = await getDockerInfo();
 
     setDockerInfo({
-      RAM: (info?.MemTotal / 1024 / 1024 / 1024).toFixed(2),
+      RAM: info?.MemTotal / 1024 / 1024 / 1024,
       arch: info?.Architecture,
     });
   }

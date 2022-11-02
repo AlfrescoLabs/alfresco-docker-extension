@@ -6,6 +6,7 @@ import {
   CircularProgress,
   colors,
   Stack,
+  Typography,
 } from '@mui/material';
 
 import PlayIcon from '@mui/icons-material/PlayArrow';
@@ -72,6 +73,7 @@ const FeedbackPanel = ({ alfrescoState }) => {
           textAlign: 'center',
         }}
       >
+        <Typography>{alfrescoState}</Typography>
         <CircularProgress
           size={30}
           sx={{
@@ -95,6 +97,7 @@ export const DockerContainerCreate = () => {
     let result = await getAlfrescoServices();
     dispatch({ type: 'REFRESH_SERVICE_STATE', payload: result });
   };
+
   // run refresh containers on load
   useEffect(() => {
     refreshContainers();

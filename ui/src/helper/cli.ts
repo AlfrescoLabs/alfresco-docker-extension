@@ -67,9 +67,12 @@ export const stopContainers = async () => {
   const containersId = containers
     .filter((c) => c.state !== 'NO_CONTAINER')
     .map((c) => c.id);
-
-  await ddClient.docker.cli.exec('stop', containersId);
-  await ddClient.docker.cli.exec('rm', containersId);
+  try {
+    await ddClient.docker.cli.exec('stop', containersId);
+    await ddClient.docker.cli.exec('rm', containersId);
+  } catch (e) {
+    console.warn(e);
+  }
 };
 
 // Remove a container if it exists
@@ -265,7 +268,7 @@ export const readyRepo = async () => {
     ]);
     return result.stdout;
   } catch (err) {
-    console.error(JSON.stringify(err));
+    //console.error(JSON.stringify(err));
     return 'false';
   }
 };
@@ -278,7 +281,7 @@ export const readySolr = async () => {
     ]);
     return result.stdout;
   } catch (err) {
-    console.error(JSON.stringify(err));
+    //console.error(JSON.stringify(err));
     return 'false';
   }
 };
@@ -291,7 +294,7 @@ export const readyActiveMq = async () => {
     ]);
     return result.stdout;
   } catch (err) {
-    console.error(JSON.stringify(err));
+    //console.error(JSON.stringify(err));
     return 'false';
   }
 };
@@ -304,7 +307,7 @@ export const readyTransform = async () => {
     ]);
     return result.stdout;
   } catch (err) {
-    console.error(JSON.stringify(err));
+    //console.error(JSON.stringify(err));
     return 'false';
   }
 };
@@ -317,7 +320,7 @@ export const readyDb = async () => {
     ]);
     return result.stdout;
   } catch (err) {
-    console.error(JSON.stringify(err));
+    //console.error(JSON.stringify(err));
     return 'false';
   }
 };

@@ -115,41 +115,42 @@ function updateStateWith(
   return state;
 }
 
-function updateAlfrescoAppState(state: ServiceStore) {
-  if (state.services.every((c) => c.state === 'READY')) {
-    state.alfrescoState = AlfrescoStates.UP_AND_RUNNING;
-    return;
+function updateAlfrescoAppState(store: ServiceStore) {
+  if (store.services.every((c) => c.state === 'READY')) {
+    store.alfrescoState = AlfrescoStates.UP_AND_RUNNING;
+    return store;
   }
 
-  if (state.services.every((c) => c.state === 'NO_CONTAINER')) {
-    state.alfrescoState = AlfrescoStates.NOT_ACTIVE;
-    return;
+  if (store.services.every((c) => c.state === 'NO_CONTAINER')) {
+    store.alfrescoState = AlfrescoStates.NOT_ACTIVE;
+    return store;
   }
 
-  if (state.alfrescoState !== AlfrescoStates.STOPPING) {
-    if (state.services.some((c) => c.state === 'RUNNING')) {
-      state.alfrescoState = AlfrescoStates.STARTING;
-      return;
+  if (store.alfrescoState !== AlfrescoStates.STOPPING) {
+    if (store.services.some((c) => c.state === 'RUNNING')) {
+      store.alfrescoState = AlfrescoStates.STARTING;
+      return store;
     }
-    if (state.services.every((c) => c.state === 'EXITED')) {
-      state.alfrescoState = AlfrescoStates.ERROR;
-      state.errors.push(
+    if (store.services.every((c) => c.state === 'EXITED')) {
+      store.alfrescoState = AlfrescoStates.ERROR;
+      store.errors.push(
         'Containers were not properly removed - click stop to remove them.'
       );
-      return;
+      return store;
     }
     if (
-      state.services.some(
+      store.services.some(
         (c) =>
           c.state === 'DEAD' ||
           c.state === 'EXITED' ||
           c.state === 'NO_CONTAINER'
       )
     ) {
-      state.alfrescoState = AlfrescoStates.ERROR;
-      return;
+      store.alfrescoState = AlfrescoStates.ERROR;
+      return store;
     }
   }
+  return store;
 }
 
 export function serviceReducer(
@@ -159,8 +160,7 @@ export function serviceReducer(
   let newState: ServiceStore = { ...state, errors: [] };
   switch (action.type) {
     case 'REFRESH_SERVICE_STATE': {
-      updateAlfrescoAppState(updateStateWith(action.payload, newState));
-      return newState;
+      return updateAlfrescoAppState(updateStateWith(action.payload, newState));
     }
     case 'START_ALFRESCO': {
       newState.alfrescoState = AlfrescoStates.STARTING;
@@ -190,13 +190,13 @@ function isReturningRows(restCall) {
 }
 
 async function isReady(service: ServiceDescriptor): Promise<boolean> {
-  const readyCheckPolicies = {
+  const readyCheckPolicies = Object.freeze({
     postgres: isReturningRows(readyDb),
     alfresco: isReturning200(readyRepo),
     'transform-core-aio': isReturning200(readyTransform),
     solr6: isReturning200(readySolr),
     activemq: isReturning200(readyActiveMq),
-  };
+  });
 
   let readyFn = readyCheckPolicies[service.name];
   let isR = false;
