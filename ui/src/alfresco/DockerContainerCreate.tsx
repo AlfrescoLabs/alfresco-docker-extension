@@ -6,15 +6,12 @@ import {
   CircularProgress,
   colors,
   Stack,
-  Typography,
-  useTheme,
 } from '@mui/material';
 
 import PlayIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import React, { useEffect, useReducer, Reducer } from 'react';
 import { DockerContainerList } from './DockerContainerList';
-import { blueGrey } from '@mui/material/colors';
 
 import { resources } from '../helper/resources';
 import {
@@ -33,10 +30,7 @@ const CommandPanel = ({ alfrescoState, dispatch }) => {
     <React.Fragment>
       <Stack direction="row" spacing={2}>
         <Button
-          disabled={
-            alfrescoState !== AlfrescoStates.NOT_ACTIVE &&
-            alfrescoState !== AlfrescoStates.ERROR
-          }
+          disabled={!AppStateQueries.canRun(alfrescoState)}
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
@@ -44,13 +38,14 @@ const CommandPanel = ({ alfrescoState, dispatch }) => {
           }}
           startIcon={<PlayIcon />}
         >
-          {alfrescoState === AlfrescoStates.NOT_ACTIVE ? 'Run' : 'Running...'}
+          {alfrescoState === AlfrescoStates.NOT_ACTIVE ||
+          alfrescoState === AlfrescoStates.ERROR ||
+          alfrescoState === AlfrescoStates.STOPPING
+            ? 'Run'
+            : 'Running...'}
         </Button>
         <Button
-          disabled={
-            alfrescoState === AlfrescoStates.NOT_ACTIVE ||
-            alfrescoState === AlfrescoStates.STOPPING
-          }
+          disabled={!AppStateQueries.canStop(alfrescoState)}
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
@@ -89,7 +84,6 @@ const FeedbackPanel = ({ alfrescoState }) => {
 };
 
 export const DockerContainerCreate = () => {
-  const theme = useTheme();
   const [alfresco, dispatch] = useReducer<Reducer<ServiceStore, Action>>(
     serviceReducer,
     defaultAlfrescoState()

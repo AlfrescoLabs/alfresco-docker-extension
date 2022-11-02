@@ -63,16 +63,13 @@ export const createNetwork = async () => {
 
 // Stop running containers in 'alfresco' network
 export const stopContainers = async () => {
-  const containers = await ddClient.docker.cli.exec('ps', [
-    '-a',
-    '-qf',
-    '"network=alfresco"',
-  ]);
-  await ddClient.docker.cli.exec(
-    'stop',
-    containers.stdout.split(/\r?\n|\r|\n/g)
-  );
-  await ddClient.docker.cli.exec('rm', containers.stdout.split(/\r?\n|\r|\n/g));
+  const containers = await alfrescoContainers();
+  const containersId = containers
+    .filter((c) => c.state !== 'NO_CONTAINER')
+    .map((c) => c.id);
+
+  await ddClient.docker.cli.exec('stop', containersId);
+  await ddClient.docker.cli.exec('rm', containersId);
 };
 
 // Remove a container if it exists

@@ -5,7 +5,7 @@ import { getDockerInfo } from '../helper/cli';
 import { resources } from '../helper/resources';
 import { RAM_LIMIT } from '../helper/constants';
 
-const enoughRAM = (dockerInfo) => dockerInfo.RAM > RAM_LIMIT;
+const enoughRAM = (dockerInfo) => dockerInfo.RAM >= RAM_LIMIT;
 const rightArch = (dockerInfo) => dockerInfo.arch === 'x86_64';
 
 const preconditions = [
@@ -28,7 +28,10 @@ const preconditions = [
 ];
 
 export const DockerContainers = () => {
-  const [dockerInfo, setDockerInfo] = useState({ RAM: '0', arch: 'x86_64' });
+  const [dockerInfo, setDockerInfo] = useState({
+    RAM: RAM_LIMIT.toString(),
+    arch: 'x86_64',
+  });
 
   async function readDockerInfo() {
     let info = await getDockerInfo();

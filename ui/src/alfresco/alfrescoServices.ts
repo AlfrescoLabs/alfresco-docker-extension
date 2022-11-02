@@ -27,7 +27,6 @@ import {
 
 export const AlfrescoStates = Object.freeze({
   NOT_ACTIVE: 'NOT_ACTIVE',
-  //INSTALLING: 'INSTALLING',
   STARTING: 'STARTING',
   UP_AND_RUNNING: 'UP_AND_RUNNING',
   STOPPING: 'STOPPING',
@@ -64,6 +63,8 @@ export const AppStateQueries = {
   canRun: (state: AlfrescoState) => {
     return state === AlfrescoStates.NOT_ACTIVE;
   },
+  canStop: (state: AlfrescoState) =>
+    state !== AlfrescoStates.NOT_ACTIVE && state !== AlfrescoStates.STOPPING,
   isLoading: (state: AlfrescoState) => state === AlfrescoStates.STARTING,
   isReady: (state: AlfrescoState) => state === AlfrescoStates.UP_AND_RUNNING,
   isStopping: (state: AlfrescoState) => state === AlfrescoStates.STOPPING,
@@ -123,6 +124,13 @@ function updateAlfrescoAppState(state: ServiceStore) {
       state.alfrescoState = AlfrescoStates.STARTING;
       return;
     }
+    if (state.services.every((c) => c.state === 'EXITED')) {
+      state.alfrescoState = AlfrescoStates.ERROR;
+      state.errors.push(
+        'Containers were not properly removed - click stop to remove them.'
+      );
+      return;
+    }
     if (
       state.services.some(
         (c) =>
@@ -141,8 +149,7 @@ export function serviceReducer(
   state: ServiceStore,
   action: Action
 ): ServiceStore {
-  console.log(action);
-  let newState: ServiceStore = { ...state };
+  let newState: ServiceStore = { ...state, errors: [] };
   switch (action.type) {
     case 'REFRESH_SERVICE_STATE': {
       updateStateWith(newState, action.payload);
