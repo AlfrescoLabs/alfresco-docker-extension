@@ -1,55 +1,69 @@
-import { Box, Stack, Alert, AlertTitle } from "@mui/material";
-import React, {useEffect} from "react";
-import { DockerContainerCreate } from "./DockerContainerCreate";
-import { getDockerInfo } from "../helper/cli"
-import { resources } from '../helper/resources'
-import { RAM_LIMIT } from '../helper/constants'
+import { Box, Stack, Alert, AlertTitle } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { DockerContainerCreate } from './DockerContainerCreate';
+import { getDockerInfo } from '../helper/cli';
+import { resources } from '../helper/resources';
+import { RAM_LIMIT } from '../helper/constants';
 
+const enoughRAM = (dockerInfo: DockerInfo) => dockerInfo.RAM >= RAM_LIMIT;
+const rightArch = (dockerInfo: DockerInfo) => dockerInfo.arch === 'x86_64';
+
+const preconditions = [
+  {
+    cond: enoughRAM,
+    title: resources.HOME.TITLE,
+    message: (info) => (
+      <div>
+        {resources.HOME.RAM_ALERT_MESSAGE} <br />{' '}
+        {resources.HOME.RAM_AVAILABLE_MESSAGE + info.RAM.toFixed(2)}
+      </div>
+    ),
+  },
+  {
+    cond: rightArch,
+    title: 'Docker Desktop Architecture not supported!',
+    message: (info) =>
+      'Architecture ' + info.arch + ' is not supported by this extension!',
+  },
+];
+type DockerInfo = {
+  RAM: number;
+  arch: 'x86_64' | 'ARM_64';
+};
 export const DockerContainers = () => {
+  const [dockerInfo, setDockerInfo] = useState<DockerInfo>({
+    RAM: RAM_LIMIT,
+    arch: 'x86_64',
+  });
 
-    const [ram, setRam] = React.useState(undefined)
-    const [architecture, setArchitecture] = React.useState('x86_64')
-    useEffect(() => {
-      (async () => {
-          let info = await getDockerInfo()
-          let ram = ((info?.MemTotal)/1024/1024/1024).toFixed(2)
-          setRam(ram)
-          let architecture = info?.Architecture
-          setArchitecture(architecture)
-      })()
-    }, [])
+  async function readDockerInfo() {
+    let info = await getDockerInfo();
 
-    let ramComponent: {}
-    if (ram < RAM_LIMIT) {
-      ramComponent =
-        <Box>
+    setDockerInfo({
+      RAM: info?.MemTotal / 1024 / 1024 / 1024,
+      arch: info?.Architecture,
+    });
+  }
+
+  useEffect(() => {
+    readDockerInfo();
+  }, []);
+
+  return (
+    <Stack direction="column" spacing={2}>
+      <Box>{resources.HOME.TITLE}</Box>
+
+      {preconditions
+        .filter((p) => p.cond(dockerInfo) === false)
+        .map((fp) => (
+          <Box>
             <Alert severity="error">
-                <AlertTitle>{resources.HOME.RAM_ALERT_TITLE}</AlertTitle>
-                {resources.HOME.RAM_ALERT_MESSAGE}<br/>
-                {resources.HOME.RAM_AVAILABLE_MESSAGE}{ram}
+              <AlertTitle>{fp.title}</AlertTitle>
+              {fp.message(dockerInfo)}
             </Alert>
-        </Box>
-    }
-
-    let archComponent: {}
-    if (architecture !== 'x86_64') {
-      archComponent = 
-        <Box>
-            <Alert severity="error">
-            <AlertTitle>Docker Desktop Architecture not supported!</AlertTitle>
-            Architecture {architecture} is not supported by this extension!
-            </Alert>
-        </Box>
-    }
-
-    return <Stack direction="column" spacing={2}>
-      <Box>
-          {resources.HOME.TITLE}
-      </Box>
-      {ramComponent}
-      {archComponent}
-      <React.Fragment>
-          {architecture === 'x86_64' && <DockerContainerCreate/>}
-      </React.Fragment>
+          </Box>
+        ))}
+      {dockerInfo.arch === 'x86_64' && <DockerContainerCreate />}
     </Stack>
-}
+  );
+};

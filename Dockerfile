@@ -1,4 +1,4 @@
-FROM node:17.7-alpine3.14 AS client-builder
+FROM node:18.9-alpine3.15 AS client-builder
 WORKDIR /ui
 # cache packages in layer
 COPY ui/package.json /ui/package.json
@@ -25,4 +25,4 @@ COPY docker-compose.yaml .
 COPY metadata.json .
 COPY alfresco.svg .
 COPY --from=client-builder /ui/build ui
-CMD /service -socket /run/guest-services/extension-alfresco-extension.sock
+#CMD /service -socket /run/guest-services/extension-alfresco-extension.sock

@@ -1,148 +1,139 @@
-import { Alert, AlertTitle, Box, Button, CircularProgress, Stack } from "@mui/material";
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  CircularProgress,
+  colors,
+  Stack,
+  Typography,
+} from '@mui/material';
+
 import PlayIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import React, { useEffect } from "react";
-import { DockerContainerList } from "./DockerContainerList";
-import { blueGrey } from "@mui/material/colors";
-import { getContainersRunning, createNetwork, deployDb, deployMq, deployRepository, deployTransform, waitTillReadyDb, refreshData, stopContainers, deploySolr } from "../helper/cli";
-import { resources } from '../helper/resources'
+import React, { useEffect, useReducer, Reducer } from 'react';
+import { DockerContainerList } from './DockerContainerList';
 
-const runContainers = async () => {
+import { resources } from '../helper/resources';
+import {
+  serviceReducer,
+  defaultAlfrescoState,
+  getAlfrescoServices,
+  AppStateQueries,
+  ServiceStore,
+  Action,
+  AlfrescoStates,
+  AlfrescoState,
+} from './alfrescoServices';
 
-    await createNetwork()
-    await deployDb()
-    await deployMq()
-    await deployTransform()
-    await deploySolr()
+const CommandPanel = ({ alfrescoState, dispatch }) => {
+  return (
+    <React.Fragment>
+      <Stack direction="row" spacing={2}>
+        <Button
+          disabled={!AppStateQueries.canRun(alfrescoState)}
+          variant="contained"
+          onClick={(e) => {
+            e.preventDefault();
+            dispatch({ type: 'START_ALFRESCO' });
+          }}
+          startIcon={<PlayIcon />}
+        >
+          {alfrescoState === AlfrescoStates.NOT_ACTIVE ||
+          alfrescoState === AlfrescoStates.ERROR ||
+          alfrescoState === AlfrescoStates.STOPPING
+            ? 'Run'
+            : 'Running...'}
+        </Button>
+        <Button
+          disabled={!AppStateQueries.canStop(alfrescoState)}
+          variant="contained"
+          onClick={(e) => {
+            e.preventDefault();
+            dispatch({ type: 'STOP_ALFRESCO' });
+          }}
+          startIcon={<StopIcon />}
+        >
+          {alfrescoState !== AlfrescoStates.STOPPING ? 'Stop' : 'Stopping...'}
+        </Button>
+      </Stack>
+    </React.Fragment>
+  );
+};
 
-    await waitTillReadyDb()
-    await deployRepository()
-
-}
-
-const clickStartButton = async (
-    setStartButton: React.Dispatch<React.SetStateAction<any>>,
-    setStartButtonDisable: React.Dispatch<React.SetStateAction<any>>,
-    setIsError: React.Dispatch<React.SetStateAction<any>>) => {
-        setStartButtonDisable(true)
-        setStartButton('Running...')
-        let success = true
-        try {
-            await runContainers()
-        } catch (err) {
-            success = false
-            setIsError(JSON.stringify(err))
-        }
-        if (success) {
-            refreshData()
-        } else {
-            setStartButtonDisable(false)
-            setStartButton('Run')
-        }
-}
-
-const clickStopButton = async (
-    setStopButton: React.Dispatch<React.SetStateAction<any>>,
-    setStopButtonDisable: React.Dispatch<React.SetStateAction<any>>,
-    setShowRefresh: React.Dispatch<React.SetStateAction<any>>,
-    setIsError: React.Dispatch<React.SetStateAction<any>>) => {
-        setStopButtonDisable(true)
-        setShowRefresh(false)
-        setStopButton('Stopping...')
-        let success = true
-        try {
-            await stopContainers()
-        } catch (err) {
-            success = false
-            setIsError(JSON.stringify(err))
-        }
-        if (success) {
-            refreshData()
-        } else {
-            setStopButtonDisable(false)
-            setShowRefresh(true)
-            setStopButton('Stop')
-        }
-}
+const FeedbackPanel = ({ alfrescoState }) => {
+  if (
+    AppStateQueries.isLoading(alfrescoState) ||
+    AppStateQueries.isStopping(alfrescoState)
+  )
+    return (
+      <Box
+        sx={{
+          marginBottom: '15px',
+          textAlign: 'center',
+        }}
+      >
+        <Typography>{alfrescoState}</Typography>
+        <CircularProgress
+          size={30}
+          sx={{
+            color: colors.blue[500],
+          }}
+        />
+      </Box>
+    );
+  return <></>;
+};
 
 export const DockerContainerCreate = () => {
-    
-    const [containers, setContainers] = React.useState('')
-    const [startButton, setStartButton] = React.useState('Run');
-    const [startButtonDisable, setStartButtonDisable] = React.useState(false);
-    const [stopButton, setStopButton] = React.useState('Stop');
-    const [stopButtonDisable, setStopButtonDisable] = React.useState(false);
-    const [isLoading, setIsLoading] = React.useState(false);
-    const [isError, setIsError] = React.useState('')
-    const [showRefresh, setShowRefresh] = React.useState(true);
+  const [alfresco, dispatch] = useReducer<Reducer<ServiceStore, Action>>(
+    serviceReducer,
+    defaultAlfrescoState()
+  );
+  function isError(state: AlfrescoState): boolean {
+    return state === AlfrescoStates.ERROR;
+  }
+  const refreshContainers = async () => {
+    let result = await getAlfrescoServices();
+    dispatch({ type: 'REFRESH_SERVICE_STATE', payload: result });
+  };
 
-    useEffect(() => {
-        (async () => {
-            setIsLoading(true)
-            let containers = await getContainersRunning()
-            setContainers(containers)
-            setIsLoading(false)
-        })()
-      }, [])
+  // run refresh containers on load
+  useEffect(() => {
+    refreshContainers();
+  }, []);
 
-    let errorComponent: {}
-    if (isError !== '') {
-        errorComponent = <Box>
-            <Alert severity="error">
-                <AlertTitle>{resources.CREATE.ERROR}</AlertTitle>
-                {isError}
-            </Alert>
-        </Box>
-    }
+  // refresh every 1.5 secs to check state
+  useEffect(() => {
+    let timer = setTimeout(refreshContainers, 2000);
+    if (alfresco.alfrescoState === AlfrescoStates.NOT_ACTIVE)
+      clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [alfresco]);
 
-    let component: {}
-    if (isLoading) {
-        component = <Box sx={{
-            marginBottom: "15px",
-            textAlign: "center"
-        }}>
-            <CircularProgress
-                size={50}
-                sx={{
-                    color: blueGrey[500],
-                }}
-            />
-        </Box>
-    } else {
+  let errorComponent: {};
+  if (isError(alfresco.alfrescoState)) {
+    errorComponent = (
+      <Box>
+        <Alert severity="error">
+          <AlertTitle>{resources.CREATE.ERROR}</AlertTitle>
+          {alfresco.errors}
+        </Alert>
+      </Box>
+    );
+  }
 
-        if (containers.length > 1) {
-            component = <React.Fragment>
-                <Stack direction="row" spacing={2}>
-                    <Button disabled={stopButtonDisable} variant="contained" onClick={() => { 
-                        clickStopButton(setStopButton, setStopButtonDisable, setShowRefresh, setIsError) }} 
-                        startIcon={<StopIcon/>}>
-                        {stopButton}
-                    </Button>
-                    {showRefresh && <Button variant="contained" onClick={() => { refreshData() }} 
-                        startIcon={<RefreshIcon/>}>
-                        Refresh
-                    </Button>}
-                </Stack>
-                <DockerContainerList />
-            </React.Fragment>
-        } else {
-            component = <React.Fragment> 
-                <Stack direction="row" spacing={2}>
-                    <Button disabled={startButtonDisable} variant="contained" onClick={() => { 
-                        clickStartButton(setStartButton, setStartButtonDisable, setIsError)}} 
-                        startIcon={<PlayIcon/>}>
-                        {startButton}
-                    </Button>
-                </Stack>
-                <DockerContainerList />
-            </React.Fragment>
-        }
-
-    }
-
-    return <React.Fragment>
-            {component}
-            {errorComponent}
-        </React.Fragment>
-}
+  return (
+    <React.Fragment>
+      {errorComponent}
+      <CommandPanel
+        alfrescoState={alfresco.alfrescoState}
+        dispatch={dispatch}
+      />
+      <FeedbackPanel alfrescoState={alfresco.alfrescoState} />
+      <DockerContainerList alfresco={alfresco} />
+    </React.Fragment>
+  );
+};
