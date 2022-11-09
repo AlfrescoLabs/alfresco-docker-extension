@@ -61,6 +61,17 @@ export const createNetwork = async () => {
   }
 };
 
+export async function runContainers() {
+  await createNetwork();
+  await deployDb();
+  await deployMq();
+  await deployTransform();
+  await deploySolr();
+
+  await waitTillReadyDb();
+  await deployRepository();
+}
+
 // Stop running containers in 'alfresco' network
 export const stopContainers = async () => {
   const containers = await alfrescoContainers();
