@@ -5,14 +5,6 @@ import {
   readySolr,
   readyTransform,
   alfrescoContainers,
-  createNetwork,
-  deployDb,
-  deployMq,
-  deployTransform,
-  deploySolr,
-  waitTillReadyDb,
-  deployRepository,
-  stopContainers,
 } from '../helper/cli';
 
 import {
@@ -82,17 +74,6 @@ export function defaultAlfrescoState(): ServiceStore {
     errors: [],
   };
 }
-
-const runContainers = async () => {
-  await createNetwork();
-  await deployDb();
-  await deployMq();
-  await deployTransform();
-  await deploySolr();
-
-  await waitTillReadyDb();
-  await deployRepository();
-};
 
 function updateStateWith(
   data: ServiceDescriptor[],
@@ -164,12 +145,11 @@ export function serviceReducer(
     }
     case 'START_ALFRESCO': {
       newState.alfrescoState = AlfrescoStates.STARTING;
-      runContainers();
       return newState;
     }
     case 'STOP_ALFRESCO': {
       newState.alfrescoState = AlfrescoStates.STOPPING;
-      stopContainers();
+
       return newState;
     }
   }

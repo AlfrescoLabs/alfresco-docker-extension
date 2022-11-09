@@ -25,7 +25,7 @@ import {
   AlfrescoStates,
   AlfrescoState,
 } from './alfrescoServices';
-
+import { runContainers, stopContainers } from '../helper/cli';
 const CommandPanel = ({ alfrescoState, dispatch }) => {
   return (
     <React.Fragment>
@@ -35,6 +35,7 @@ const CommandPanel = ({ alfrescoState, dispatch }) => {
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
+            runContainers();
             dispatch({ type: 'START_ALFRESCO' });
           }}
           startIcon={<PlayIcon />}
@@ -50,6 +51,7 @@ const CommandPanel = ({ alfrescoState, dispatch }) => {
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
+            stopContainers();
             dispatch({ type: 'STOP_ALFRESCO' });
           }}
           startIcon={<StopIcon />}
