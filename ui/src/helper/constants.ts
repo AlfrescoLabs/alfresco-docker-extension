@@ -7,6 +7,8 @@ export const TRANSFORM_IMAGE_TAG = 'alfresco/alfresco-transform-core-aio:2.5.7';
 export const REPO_IMAGE_TAG =
   'alfresco/alfresco-content-repository-community:7.2.0';
 export const SOLR_IMAGE_TAG = 'alfresco/alfresco-search-services:2.0.3';
+export const ACA_IMAGE_TAG = 'alfresco/alfresco-content-app:2.9.0';
+export const PROXY_IMAGE_TAG = 'alfresco/alfresco-acs-nginx:3.4.2';
 
 export interface ServiceDescriptor {
   id: string;
@@ -23,6 +25,8 @@ export const alfrescoServices = [
   'transform-core-aio',
   'activemq',
   'postgres',
+  'content-app',
+  'proxy'
 ];
 
 export type ContainerState =

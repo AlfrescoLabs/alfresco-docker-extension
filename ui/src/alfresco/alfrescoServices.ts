@@ -5,6 +5,8 @@ import {
   readySolr,
   readyTransform,
   alfrescoContainers,
+  readyAca,
+  readyProxy,
 } from '../helper/cli';
 
 import {
@@ -13,6 +15,8 @@ import {
   REPO_IMAGE_TAG,
   SOLR_IMAGE_TAG,
   TRANSFORM_IMAGE_TAG,
+  ACA_IMAGE_TAG,
+  PROXY_IMAGE_TAG,
   ServiceDescriptor,
   ContainerState,
 } from '../helper/constants';
@@ -70,6 +74,8 @@ export function defaultAlfrescoState(): ServiceStore {
       emptyServiceDescFor('activemq', ACTIVEMQ_IMAGE_TAG),
       emptyServiceDescFor('solr6', SOLR_IMAGE_TAG),
       emptyServiceDescFor('transform-core-aio', TRANSFORM_IMAGE_TAG),
+      emptyServiceDescFor('content-app', ACA_IMAGE_TAG),
+      emptyServiceDescFor('proxy', PROXY_IMAGE_TAG)
     ],
     errors: [],
   };
@@ -176,6 +182,8 @@ async function isReady(service: ServiceDescriptor): Promise<boolean> {
     'transform-core-aio': isReturning200(readyTransform),
     solr6: isReturning200(readySolr),
     activemq: isReturning200(readyActiveMq),
+    'content-app': isReturning200(readyAca),
+    proxy: isReturning200(readyProxy)
   });
 
   let readyFn = readyCheckPolicies[service.name];

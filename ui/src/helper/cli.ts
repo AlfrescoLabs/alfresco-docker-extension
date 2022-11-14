@@ -7,6 +7,8 @@ import {
   TRANSFORM_IMAGE_TAG,
   ServiceDescriptor,
   alfrescoServices,
+  ACA_IMAGE_TAG,
+  PROXY_IMAGE_TAG,
 } from '../helper/constants';
 // DOCKER DESKTOP Client
 const ddClient = createDockerDesktopClient();
@@ -70,6 +72,10 @@ export async function runContainers() {
 
   await waitTillReadyDb();
   await deployRepository();
+
+  await deployAca();
+  await deployProxy();
+
 }
 
 // Stop running containers in 'alfresco' network
@@ -219,8 +225,6 @@ export const deployRepository = async () => {
       'JAVA_TOOL_OPTIONS="-Dencryption.keystore.type=JCEKS -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding -Dencryption.keyAlgorithm=DESede -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore -Dmetadata-keystore.password=mp6yc0UD9e -Dmetadata-keystore.aliases=metadata -Dmetadata-keystore.metadata.password=oKIWzVdEdA -Dmetadata-keystore.metadata.algorithm=DESede"',
       '-e',
       'JAVA_OPTS="-Ddb.driver=org.postgresql.Driver -Ddb.username=alfresco -Ddb.password=alfresco -Ddb.url=jdbc:postgresql://postgres:5432/alfresco -Dsolr.host=solr6 -Dsolr.port=8983 -Dsolr.http.connection.timeout=1000 -Dsolr.secureComms=secret -Dsolr.sharedSecret=secret -Dsolr.base.url=/solr -Dindex.subsystem.name=solr6 -Dshare.host=127.0.0.1 -Dshare.port=8080 -Dalfresco.host=localhost -Dalfresco.port=8080 -Daos.baseUrlOverwrite=http://localhost:8080/alfresco/aos -Dmessaging.broker.url=\'failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true\' -Ddeployment.method=DOCKER_COMPOSE -DlocalTransform.core-aio.url=http://transform-core-aio:8090/ -Dcsrf.filter.enabled=false -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"',
-      '-p',
-      '8080:8080',
       '--network',
       'alfresco',
       REPO_IMAGE_TAG,
@@ -267,6 +271,74 @@ export const deploySolr = async () => {
       '--network',
       'alfresco',
       SOLR_IMAGE_TAG,
+    ]);
+  }
+};
+
+export const deployAca = async () => {
+  const running = await ddClient.docker.cli.exec('ps', [
+    '-f',
+    'status=running',
+    '-f',
+    'name=content-app',
+    '-f',
+    'network=alfresco',
+    '-q',
+  ]);
+
+  if (running.stdout.length === 0) {
+    await removeContainer('content-app');
+
+    await ddClient.docker.cli.exec('run', [
+      '-d',
+      '--memory',
+      '256m',
+      '--name',
+      'content-app',
+      '--network',
+      'alfresco',
+      ACA_IMAGE_TAG,
+    ]);
+  }
+};
+
+export const deployProxy = async () => {
+  const running = await ddClient.docker.cli.exec('ps', [
+    '-f',
+    'status=running',
+    '-f',
+    'name=proxy',
+    '-f',
+    'network=alfresco',
+    '-q',
+  ]);
+
+  if (running.stdout.length === 0) {
+    await removeContainer('proxy');
+
+    await ddClient.docker.cli.exec('run', [
+      '-d',
+      '--memory',
+      '128m',
+      '--name',
+      'proxy',
+      '-e',
+      'DISABLE_PROMETHEUS=true',
+      '-e',
+      'DISABLE_SYNCSERVICE=true',
+      '-e',
+      'DISABLE_ADW=true',
+      '-e',
+      'DISABLE_CONTROL_CENTER=true',
+      '-e',
+      'DISABLE_SHARE=true',
+      '-e',
+      'ENABLE_CONTENT_APP=true',
+      '-p',
+      '8080:8080',
+      '--network',
+      'alfresco',
+      PROXY_IMAGE_TAG,
     ]);
   }
 };
@@ -323,6 +395,32 @@ export const readyTransform = async () => {
   }
 };
 
+export const readyAca = async () => {
+  try {
+    const result = await ddClient.docker.cli.exec('exec', [
+      'content-app',
+      'sh -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8080/"',
+    ]);
+    return result.stdout;
+  } catch (err) {
+    //console.error(JSON.stringify(err));
+    return 'false';
+  }
+};
+
+export const readyProxy = async () => {
+  try {
+    const result = await ddClient.docker.cli.exec('exec', [
+      'proxy',
+      'sh -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8080/content-app/"',
+    ]);
+    return result.stdout;
+  } catch (err) {
+    //console.error(JSON.stringify(err));
+    return 'false';
+  }
+};
+
 export const readyDb = async () => {
   try {
     const result = await ddClient.docker.cli.exec('exec', [
@@ -354,5 +452,5 @@ export const viewContainer = async (id: string) => {
 };
 
 export const openAlfrescoInBrowser = async () => {
-  ddClient.host.openExternal('http://localhost:8080/alfresco');
+  ddClient.host.openExternal('http://localhost:8080/content-app/');
 };
