@@ -16,9 +16,12 @@ import ErrorIcon from '@mui/icons-material/Error';
 import { viewContainer, openAlfrescoInBrowser } from '../helper/cli';
 import { resources } from '../helper/resources';
 
-import { ContainerState } from '../helper/constants';
 import React from 'react';
-import { AlfrescoStates, ServiceStore } from './alfrescoServices';
+import {
+  AlfrescoStates,
+  ServiceStore,
+  ContainerState,
+} from './alfrescoServices';
 
 const startAlfresco = async () => {
   await openAlfrescoInBrowser();

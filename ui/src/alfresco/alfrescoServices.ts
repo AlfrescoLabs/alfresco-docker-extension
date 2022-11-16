@@ -4,23 +4,22 @@ import {
   readyRepo,
   readySolr,
   readyTransform,
-  alfrescoContainers,
+  listAllContainers,
   readyAca,
   readyProxy,
 } from '../helper/cli';
 
-import {
-  ACTIVEMQ_IMAGE_TAG,
-  POSTGRES_IMAGE_TAG,
-  REPO_IMAGE_TAG,
-  SOLR_IMAGE_TAG,
-  TRANSFORM_IMAGE_TAG,
-  ACA_IMAGE_TAG,
-  PROXY_IMAGE_TAG,
-  ServiceDescriptor,
-  ContainerState,
-} from '../helper/constants';
+import { ServiceConfiguration } from './configuration';
 
+export interface Service {
+  id: string;
+  name: string;
+  state: ContainerState;
+  status: string;
+  image: string;
+  imageName: string;
+  version: string;
+}
 export const AlfrescoStates = Object.freeze({
   NOT_ACTIVE: 'NOT_ACTIVE',
   STARTING: 'STARTING',
@@ -30,9 +29,19 @@ export const AlfrescoStates = Object.freeze({
 });
 export type AlfrescoState = keyof typeof AlfrescoStates;
 
+export type ContainerState =
+  | 'NO_CONTAINER'
+  | 'RUNNING'
+  | 'READY'
+  | 'CREATED'
+  | 'RESTARTING'
+  | 'REMOVING'
+  | 'PAUSED'
+  | 'EXITED'
+  | 'DEAD';
 export interface ServiceStore {
   alfrescoState: AlfrescoState;
-  services: ServiceDescriptor[];
+  services: Service[];
   errors: string[];
 }
 export type Action = {
@@ -41,7 +50,7 @@ export type Action = {
   error?: string;
 };
 
-function emptyServiceDescFor(name: string, image: string): ServiceDescriptor {
+function emptyServiceDescFor(name: string, image: string): Service {
   let [imageName, version] = image.split(':');
   return {
     id: '',
@@ -65,26 +74,18 @@ export const AppStateQueries = {
   isReady: (state: AlfrescoState) => state === AlfrescoStates.UP_AND_RUNNING,
   isStopping: (state: AlfrescoState) => state === AlfrescoStates.STOPPING,
 };
-export function defaultAlfrescoState(): ServiceStore {
+
+export function defaultAlfrescoState(
+  configuration: ServiceConfiguration[]
+): ServiceStore {
   return {
     alfrescoState: AlfrescoStates.NOT_ACTIVE,
-    services: [
-      emptyServiceDescFor('alfresco', REPO_IMAGE_TAG),
-      emptyServiceDescFor('postgres', POSTGRES_IMAGE_TAG),
-      emptyServiceDescFor('activemq', ACTIVEMQ_IMAGE_TAG),
-      emptyServiceDescFor('solr6', SOLR_IMAGE_TAG),
-      emptyServiceDescFor('transform-core-aio', TRANSFORM_IMAGE_TAG),
-      emptyServiceDescFor('content-app', ACA_IMAGE_TAG),
-      emptyServiceDescFor('proxy', PROXY_IMAGE_TAG)
-    ],
+    services: configuration.map((c) => emptyServiceDescFor(c.service, c.image)),
     errors: [],
   };
 }
 
-function updateStateWith(
-  data: ServiceDescriptor[],
-  state: ServiceStore
-): ServiceStore {
+function updateStateWith(data: Service[], state: ServiceStore): ServiceStore {
   for (let curr of state.services) {
     let contState: ContainerState = 'NO_CONTAINER';
 
@@ -159,7 +160,7 @@ export function serviceReducer(
       return newState;
     }
   }
-  return defaultAlfrescoState();
+  return state;
 }
 
 function isReturning200(restCall) {
@@ -175,7 +176,7 @@ function isReturningRows(restCall) {
   };
 }
 
-async function isReady(service: ServiceDescriptor): Promise<boolean> {
+async function isReady(service: Service): Promise<boolean> {
   const readyCheckPolicies = Object.freeze({
     postgres: isReturningRows(readyDb),
     alfresco: isReturning200(readyRepo),
@@ -183,7 +184,7 @@ async function isReady(service: ServiceDescriptor): Promise<boolean> {
     solr6: isReturning200(readySolr),
     activemq: isReturning200(readyActiveMq),
     'content-app': isReturning200(readyAca),
-    proxy: isReturning200(readyProxy)
+    proxy: isReturning200(readyProxy),
   });
 
   let readyFn = readyCheckPolicies[service.name];
@@ -193,11 +194,26 @@ async function isReady(service: ServiceDescriptor): Promise<boolean> {
   }
   return isR;
 }
-
-export async function getAlfrescoServices() {
-  let services = [];
+function dockerAPIToContainerDesc(dockerAPIContainer): Service {
+  const [imageName, imageTag] = dockerAPIContainer.Image.split(':');
+  return {
+    name: dockerAPIContainer.Names[0].substring(1),
+    state: dockerAPIContainer.State.toUpperCase(),
+    status: dockerAPIContainer.Status,
+    image: dockerAPIContainer.Image,
+    imageName,
+    version: imageTag,
+    id: dockerAPIContainer.Id,
+  };
+}
+export async function getAlfrescoServices(
+  serviceNames: string[]
+): Promise<Service[]> {
   try {
-    services = await alfrescoContainers();
+    const containerList = await listAllContainers(serviceNames);
+    const services: Service[] = containerList.map((e) => {
+      return dockerAPIToContainerDesc(e);
+    });
     for (let i = 0; i < services.length; i++) {
       if (services[i].state === 'RUNNING')
         services[i].state = (await isReady(services[i]))
@@ -208,5 +224,4 @@ export async function getAlfrescoServices() {
   } catch (err) {
     console.log(err);
   }
-  return services;
 }

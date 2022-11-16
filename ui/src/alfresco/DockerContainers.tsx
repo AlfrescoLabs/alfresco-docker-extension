@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { DockerContainerCreate } from './DockerContainerCreate';
 import { getDockerInfo } from '../helper/cli';
 import { resources } from '../helper/resources';
-import { RAM_LIMIT } from '../helper/constants';
+import { RAM_LIMIT } from './configuration';
 
 const enoughRAM = (dockerInfo: DockerInfo) => dockerInfo.RAM >= RAM_LIMIT;
 const rightArch = (dockerInfo: DockerInfo) => dockerInfo.arch === 'x86_64';
