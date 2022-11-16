@@ -1,31 +1,19 @@
+import { ServiceConfiguration, ServiceName } from './types';
+
 export const RAM_LIMIT = 10;
 
-const POSTGRES_IMAGE_TAG = 'postgres:13.3';
-const ACTIVEMQ_IMAGE_TAG = 'alfresco/alfresco-activemq:5.16.4-jre11-centos7';
-const TRANSFORM_IMAGE_TAG = 'alfresco/alfresco-transform-core-aio:2.5.7';
-const REPO_IMAGE_TAG = 'alfresco/alfresco-content-repository-community:7.2.0';
-const SOLR_IMAGE_TAG = 'alfresco/alfresco-search-services:2.0.3';
-const ACA_IMAGE_TAG = 'alfresco/alfresco-content-app:2.9.0';
-const PROXY_IMAGE_TAG = 'alfresco/alfresco-acs-nginx:3.4.2';
-export type ServiceConfiguration = {
-  service:
-    | 'activemq'
-    | 'solr6'
-    | 'transform-core-aio'
-    | 'postgres'
-    | 'alfresco'
-    | 'proxy'
-    | 'content-app';
-  network: string;
+type option = {
+  name: string;
   image: string;
-  run: { options: string[]; cmd: string; order: number };
 };
 
-export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
-  {
+function createConfigurationFor(components: option[]): ServiceConfiguration[] {
+  return components.map(({ name, image }) => ConfigurationMap[name](image));
+}
+const ConfigurationMap = {
+  alfresco: (image: string) => ({
     service: 'alfresco',
-    network: 'alfresco',
-    image: REPO_IMAGE_TAG,
+    image,
     run: {
       options: [
         '--memory',
@@ -38,11 +26,10 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: '',
       order: 2,
     },
-  },
-  {
+  }),
+  postgres: (image: string) => ({
     service: 'postgres',
-    network: 'alfresco',
-    image: POSTGRES_IMAGE_TAG,
+    image,
     run: {
       options: [
         '--memory',
@@ -59,21 +46,19 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: 'postgres -c max_connections=200 -c logging_collector=on -c log_min_messages=LOG -c log_directory=/var/log/postgresql',
       order: 0,
     },
-  },
-  {
+  }),
+  activemq: (image: string) => ({
     service: 'activemq',
-    network: 'alfresco',
-    image: ACTIVEMQ_IMAGE_TAG,
+    image,
     run: {
       options: ['--memory', '768m', '-p', '8161:8161'],
       cmd: '',
       order: 0,
     },
-  },
-  {
+  }),
+  'transform-core-aio': (image: string) => ({
     service: 'transform-core-aio',
-    network: 'alfresco',
-    image: TRANSFORM_IMAGE_TAG,
+    image,
     run: {
       options: [
         '--memory',
@@ -84,11 +69,10 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: '',
       order: 1,
     },
-  },
-  {
+  }),
+  solr6: (image: string) => ({
     service: 'solr6',
-    network: 'alfresco',
-    image: SOLR_IMAGE_TAG,
+    image,
     run: {
       options: [
         '--memory',
@@ -113,11 +97,10 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: '',
       order: 1,
     },
-  },
-  {
+  }),
+  proxy: (image: string) => ({
     service: 'proxy',
-    network: 'alfresco',
-    image: PROXY_IMAGE_TAG,
+    image,
     run: {
       options: [
         '--memory',
@@ -140,15 +123,52 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: '',
       order: 4,
     },
-  },
-  {
+  }),
+  'content-app': (image: string) => ({
     service: 'content-app',
-    network: 'alfresco',
-    image: ACA_IMAGE_TAG,
+    image,
     run: {
       options: ['--memory', '256m'],
       cmd: '',
       order: 1,
     },
-  },
-];
+  }),
+};
+export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] =
+  createConfigurationFor([
+    {
+      name: 'alfresco',
+      image: 'alfresco/alfresco-content-repository-community:7.2.0',
+    },
+    {
+      name: 'activemq',
+      image: 'alfresco/alfresco-activemq:5.16.4-jre11-centos7',
+    },
+    { name: 'proxy', image: 'alfresco/alfresco-acs-nginx:3.4.2' },
+    { name: 'content-app', image: 'alfresco/alfresco-content-app:2.9.0' },
+    { name: 'solr6', image: 'alfresco/alfresco-search-services:2.0.3' },
+    {
+      name: 'transform-core-aio',
+      image: 'alfresco/alfresco-transform-core-aio:2.5.7',
+    },
+    { name: 'postgres', image: 'postgres:13.3' },
+  ]);
+export const ALFRESCO_7_3_CONFIGURATION: ServiceConfiguration[] =
+  createConfigurationFor([
+    {
+      name: 'alfresco',
+      image: 'alfresco/alfresco-content-repository-community:7.3.0',
+    },
+    {
+      name: 'activemq',
+      image: 'alfresco/alfresco-activemq:5.17.1-jre11-rockylinux8',
+    },
+    { name: 'proxy', image: 'alfresco/alfresco-acs-nginx:3.4.2' },
+    { name: 'content-app', image: 'alfresco/alfresco-content-app:3.1.0' },
+    { name: 'solr6', image: 'alfresco/alfresco-search-services:2.0.5.1' },
+    {
+      name: 'transform-core-aio',
+      image: 'alfresco/alfresco-transform-core-aio:3.0.0',
+    },
+    { name: 'postgres', image: 'postgres:14.4' },
+  ]);

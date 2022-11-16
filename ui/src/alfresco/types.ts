@@ -1,3 +1,17 @@
+export type ServiceName =
+  | 'activemq'
+  | 'solr6'
+  | 'transform-core-aio'
+  | 'postgres'
+  | 'alfresco'
+  | 'proxy'
+  | 'content-app';
+
+export type ServiceConfiguration = {
+  service: ServiceName;
+  image: string;
+  run: { options: string[]; cmd: string; order: number };
+};
 export interface Service {
   id: string;
   name: string;
@@ -29,6 +43,7 @@ export type ContainerState =
 
 export interface ServiceStore {
   alfrescoState: AlfrescoState;
+  configuration: ServiceConfiguration[];
   services: Service[];
   errors: string[];
 }

@@ -11,7 +11,7 @@ import {
 
 import PlayIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
-import React, { useEffect, useReducer, Reducer } from 'react';
+import React, { useEffect, useReducer, Reducer, useState } from 'react';
 import { DockerContainerList } from './DockerContainerList';
 import { ServiceStore, Action, AlfrescoStates } from './types';
 import { resources } from '../helper/resources';
@@ -29,9 +29,25 @@ import {
   isError,
 } from './queryState';
 import { runContainers, stopContainers } from '../helper/cli';
-import { ALFRESCO_7_2_CONFIGURATION } from './configuration';
+import {
+  ALFRESCO_7_3_CONFIGURATION,
+  ALFRESCO_7_2_CONFIGURATION,
+} from './configuration';
 
-const CommandPanel = ({ alfrescoState, dispatch }) => {
+function commands(alfresco: ServiceStore, dispatch) {
+  return {
+    run: () => {
+      runContainers(alfresco.configuration);
+      dispatch({ type: 'START_ALFRESCO' });
+    },
+    stop: () => {
+      stopContainers(alfresco.configuration);
+      dispatch({ type: 'STOP_ALFRESCO' });
+    },
+  };
+}
+
+const CommandPanel = ({ alfrescoState, commands }) => {
   return (
     <React.Fragment>
       <Stack direction="row" spacing={2}>
@@ -40,8 +56,7 @@ const CommandPanel = ({ alfrescoState, dispatch }) => {
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
-            runContainers(ALFRESCO_7_2_CONFIGURATION);
-            dispatch({ type: 'START_ALFRESCO' });
+            commands.run();
           }}
           startIcon={<PlayIcon />}
         >
@@ -52,8 +67,7 @@ const CommandPanel = ({ alfrescoState, dispatch }) => {
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
-            stopContainers(ALFRESCO_7_2_CONFIGURATION);
-            dispatch({ type: 'STOP_ALFRESCO' });
+            commands.stop();
           }}
           startIcon={<StopIcon />}
         >
@@ -86,13 +100,16 @@ const FeedbackPanel = ({ alfrescoState }) => {
 };
 
 export const DockerContainerCreate = () => {
+  const [configuration, setConfiguration] = useState(
+    ALFRESCO_7_3_CONFIGURATION
+  );
   const [alfresco, dispatch] = useReducer<Reducer<ServiceStore, Action>>(
     serviceReducer,
-    defaultAlfrescoState(ALFRESCO_7_2_CONFIGURATION)
+    defaultAlfrescoState(configuration)
   );
 
   const refreshContainers = async () => {
-    let result = await getAlfrescoServices(ALFRESCO_7_2_CONFIGURATION);
+    let result = await getAlfrescoServices(configuration);
     dispatch({ type: 'REFRESH_SERVICE_STATE', payload: result });
   };
 
@@ -128,7 +145,7 @@ export const DockerContainerCreate = () => {
       {errorComponent}
       <CommandPanel
         alfrescoState={alfresco.alfrescoState}
-        dispatch={dispatch}
+        commands={commands(alfresco, dispatch)}
       />
       <FeedbackPanel alfrescoState={alfresco.alfrescoState} />
       <DockerContainerList alfresco={alfresco} />

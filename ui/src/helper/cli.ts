@@ -1,5 +1,5 @@
 import { createDockerDesktopClient } from '@docker/extension-api-client';
-import { ServiceConfiguration } from '../alfresco/configuration';
+import { ServiceConfiguration } from '../alfresco/types';
 // DOCKER DESKTOP Client
 const ddClient = createDockerDesktopClient();
 
@@ -51,9 +51,7 @@ function groupByRunOrder(
   );
 }
 export async function runContainers(services: ServiceConfiguration[]) {
-  // TODO substitute create network with reduce on network name.
   await createNetwork('alfresco');
-
   const runGroups = groupByRunOrder(services);
   runGroups.forEach(async (s) => {
     await Promise.all(s.map(deployService));
@@ -93,7 +91,7 @@ export async function deployService(config: ServiceConfiguration) {
     '-f',
     'name=' + config.service,
     '-f',
-    'network=' + config.network,
+    'network=alfresco',
     '-q',
   ]);
   if (running.stdout.length === 0) {
@@ -103,7 +101,7 @@ export async function deployService(config: ServiceConfiguration) {
       '--name',
       config.service,
       '--network',
-      config.network,
+      'alfresco',
       ...config.run.options,
       config.image,
       config.run.cmd,

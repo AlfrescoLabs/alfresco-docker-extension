@@ -5,9 +5,9 @@ import {
   ServiceStore,
   Action,
   ContainerState,
+  ServiceConfiguration,
 } from './types';
 import { isReady } from './checkServiceReadiness';
-import { ServiceConfiguration } from './configuration';
 
 function emptyServiceDescFor(name: string, image: string): Service {
   let [imageName, version] = image.split(':');
@@ -27,6 +27,7 @@ export function defaultAlfrescoState(
 ): ServiceStore {
   return {
     alfrescoState: AlfrescoStates.NOT_ACTIVE,
+    configuration,
     services: configuration.map((c) => emptyServiceDescFor(c.service, c.image)),
     errors: [],
   };
