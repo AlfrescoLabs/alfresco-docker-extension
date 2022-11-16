@@ -13,17 +13,13 @@ import PlayIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import React, { useEffect, useReducer, Reducer } from 'react';
 import { DockerContainerList } from './DockerContainerList';
-
+import { ServiceStore, Action, AlfrescoStates, AlfrescoState } from './types';
 import { resources } from '../helper/resources';
 import {
   serviceReducer,
   defaultAlfrescoState,
   getAlfrescoServices,
   AppStateQueries,
-  ServiceStore,
-  Action,
-  AlfrescoStates,
-  AlfrescoState,
 } from './alfrescoServices';
 import { runContainers, stopContainers } from '../helper/cli';
 import { ALFRESCO_7_2_CONFIGURATION } from './configuration';
@@ -52,7 +48,7 @@ const CommandPanel = ({ alfrescoState, dispatch }) => {
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
-            stopContainers(ALFRESCO_7_2_CONFIGURATION.map((s) => s.service));
+            stopContainers(ALFRESCO_7_2_CONFIGURATION);
             dispatch({ type: 'STOP_ALFRESCO' });
           }}
           startIcon={<StopIcon />}
@@ -97,9 +93,8 @@ export const DockerContainerCreate = () => {
     return state === AlfrescoStates.ERROR;
   }
   const refreshContainers = async () => {
-    let result = await getAlfrescoServices(
-      ALFRESCO_7_2_CONFIGURATION.map((s) => s.service)
-    );
+    let result = await getAlfrescoServices(ALFRESCO_7_2_CONFIGURATION);
+    console.log(result);
     dispatch({ type: 'REFRESH_SERVICE_STATE', payload: result });
   };
 
@@ -110,7 +105,7 @@ export const DockerContainerCreate = () => {
 
   // refresh every 1.5 secs to check state
   useEffect(() => {
-    let timer = setTimeout(refreshContainers, 2000);
+    let timer = setTimeout(refreshContainers, 1500);
     if (alfresco.alfrescoState === AlfrescoStates.NOT_ACTIVE)
       clearTimeout(timer);
     return () => {

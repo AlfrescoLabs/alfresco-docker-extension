@@ -8,47 +8,16 @@ import {
   readyAca,
   readyProxy,
 } from '../helper/cli';
+import {
+  AlfrescoState,
+  AlfrescoStates,
+  Service,
+  ServiceStore,
+  Action,
+  ContainerState,
+} from './types';
 
 import { ServiceConfiguration } from './configuration';
-
-export interface Service {
-  id: string;
-  name: string;
-  state: ContainerState;
-  status: string;
-  image: string;
-  imageName: string;
-  version: string;
-}
-export const AlfrescoStates = Object.freeze({
-  NOT_ACTIVE: 'NOT_ACTIVE',
-  STARTING: 'STARTING',
-  UP_AND_RUNNING: 'UP_AND_RUNNING',
-  STOPPING: 'STOPPING',
-  ERROR: 'ERROR',
-});
-export type AlfrescoState = keyof typeof AlfrescoStates;
-
-export type ContainerState =
-  | 'NO_CONTAINER'
-  | 'RUNNING'
-  | 'READY'
-  | 'CREATED'
-  | 'RESTARTING'
-  | 'REMOVING'
-  | 'PAUSED'
-  | 'EXITED'
-  | 'DEAD';
-export interface ServiceStore {
-  alfrescoState: AlfrescoState;
-  services: Service[];
-  errors: string[];
-}
-export type Action = {
-  type: string;
-  payload?: any;
-  error?: string;
-};
 
 function emptyServiceDescFor(name: string, image: string): Service {
   let [imageName, version] = image.split(':');
@@ -63,7 +32,6 @@ function emptyServiceDescFor(name: string, image: string): Service {
   };
 }
 
-export const actions = ['RUN_SERVICES', 'STOP_SERVICES'];
 export const AppStateQueries = {
   canRun: (state: AlfrescoState) => {
     return state === AlfrescoStates.NOT_ACTIVE;
@@ -207,19 +175,20 @@ function dockerAPIToContainerDesc(dockerAPIContainer): Service {
   };
 }
 export async function getAlfrescoServices(
-  serviceNames: string[]
+  serviceConf: ServiceConfiguration[]
 ): Promise<Service[]> {
   try {
-    const containerList = await listAllContainers(serviceNames);
+    const containerList = await listAllContainers(serviceConf);
     const services: Service[] = containerList.map((e) => {
       return dockerAPIToContainerDesc(e);
     });
-    for (let i = 0; i < services.length; i++) {
-      if (services[i].state === 'RUNNING')
-        services[i].state = (await isReady(services[i]))
-          ? 'READY'
-          : services[i].state;
-    }
+    await Promise.all(
+      services
+        .filter((s) => s.state === 'RUNNING')
+        .map(async (s) => {
+          s.state = (await isReady(s)) ? 'READY' : s.state;
+        })
+    );
     return services;
   } catch (err) {
     console.log(err);

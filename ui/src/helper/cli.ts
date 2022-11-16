@@ -18,13 +18,13 @@ export const getDockerInfo = async () => {
 };
 
 export async function listAllContainers(
-  containerNames: string[],
+  configuration: ServiceConfiguration[],
   network: string = 'alfresco'
 ): Promise<any[]> {
   const containerList = (await ddClient.docker.listContainers({
     all: true,
     filters: JSON.stringify({
-      name: containerNames,
+      name: configuration.map((s) => s.service),
       network: [network],
     }),
   })) as any[];
@@ -40,7 +40,7 @@ export const createNetwork = async (name: string) => {
   }
 };
 
-function groupByrunOrder(
+function groupByRunOrder(
   services: ServiceConfiguration[]
 ): ServiceConfiguration[][] {
   return Object.values(
@@ -54,15 +54,15 @@ export async function runContainers(services: ServiceConfiguration[]) {
   // TODO substitute create network with reduce on network name.
   await createNetwork('alfresco');
 
-  const runGroups = groupByrunOrder(services);
+  const runGroups = groupByRunOrder(services);
   runGroups.forEach(async (s) => {
     await Promise.all(s.map(deployService));
   });
 }
 
 // Stop running containers in 'alfresco' network
-export const stopContainers = async (containerNames: string[]) => {
-  const containers = await listAllContainers(containerNames);
+export const stopContainers = async (services: ServiceConfiguration[]) => {
+  const containers = await listAllContainers(services);
   const containersId = containers.map((c) => c.Id);
   try {
     await ddClient.docker.cli.exec('stop', containersId);
