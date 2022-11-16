@@ -111,96 +111,16 @@ export async function deployService(config: ServiceConfiguration) {
   }
 }
 
-export const readyRepo = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'alfresco',
-      'bash -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8080/alfresco/s/api/server"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readySolr = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'solr6',
-      'bash -c "curl -s -L -o /dev/null --max-time 1 -w "%{http_code}" --header "X-Alfresco-Search-Secret:secret" http://localhost:8983/solr"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readyActiveMq = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'activemq',
-      'bash -c "curl -u admin:admin -L -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8161"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readyTransform = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'transform-core-aio',
-      'bash -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8090"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readyAca = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'content-app',
-      'sh -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8080/"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readyProxy = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'proxy',
-      'sh -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8080/content-app/"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readyDb = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'postgres',
-      'psql -U alfresco -c "select 1 where false"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
+export function readyCheckFn(service: string, cmd: string) {
+  return async () => {
+    try {
+      const result = await ddClient.docker.cli.exec('exec', [service, cmd]);
+      return result.stdout;
+    } catch (err) {
+      return 'false';
+    }
+  };
+}
 
 export const waitTillReadyDb = async () => {
   try {

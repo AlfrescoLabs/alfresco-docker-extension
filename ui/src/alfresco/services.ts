@@ -1,22 +1,12 @@
+import { listAllContainers } from '../helper/cli';
 import {
-  readyActiveMq,
-  readyDb,
-  readyRepo,
-  readySolr,
-  readyTransform,
-  listAllContainers,
-  readyAca,
-  readyProxy,
-} from '../helper/cli';
-import {
-  AlfrescoState,
   AlfrescoStates,
   Service,
   ServiceStore,
   Action,
   ContainerState,
 } from './types';
-
+import { isReady } from './checkServiceReadiness';
 import { ServiceConfiguration } from './configuration';
 
 function emptyServiceDescFor(name: string, image: string): Service {
@@ -31,17 +21,6 @@ function emptyServiceDescFor(name: string, image: string): Service {
     version,
   };
 }
-
-export const AppStateQueries = {
-  canRun: (state: AlfrescoState) => {
-    return state === AlfrescoStates.NOT_ACTIVE;
-  },
-  canStop: (state: AlfrescoState) =>
-    state !== AlfrescoStates.NOT_ACTIVE && state !== AlfrescoStates.STOPPING,
-  isLoading: (state: AlfrescoState) => state === AlfrescoStates.STARTING,
-  isReady: (state: AlfrescoState) => state === AlfrescoStates.UP_AND_RUNNING,
-  isStopping: (state: AlfrescoState) => state === AlfrescoStates.STOPPING,
-};
 
 export function defaultAlfrescoState(
   configuration: ServiceConfiguration[]
@@ -131,37 +110,6 @@ export function serviceReducer(
   return state;
 }
 
-function isReturning200(restCall) {
-  return async () => {
-    let status: string = await restCall();
-    return status === '200';
-  };
-}
-function isReturningRows(restCall) {
-  return async () => {
-    let status: string = await restCall();
-    return status.includes('rows');
-  };
-}
-
-async function isReady(service: Service): Promise<boolean> {
-  const readyCheckPolicies = Object.freeze({
-    postgres: isReturningRows(readyDb),
-    alfresco: isReturning200(readyRepo),
-    'transform-core-aio': isReturning200(readyTransform),
-    solr6: isReturning200(readySolr),
-    activemq: isReturning200(readyActiveMq),
-    'content-app': isReturning200(readyAca),
-    proxy: isReturning200(readyProxy),
-  });
-
-  let readyFn = readyCheckPolicies[service.name];
-  let isR = false;
-  if (readyFn) {
-    isR = await readyFn();
-  }
-  return isR;
-}
 function dockerAPIToContainerDesc(dockerAPIContainer): Service {
   const [imageName, imageTag] = dockerAPIContainer.Image.split(':');
   return {

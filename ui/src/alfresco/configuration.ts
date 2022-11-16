@@ -19,7 +19,6 @@ export type ServiceConfiguration = {
   network: string;
   image: string;
   run: { options: string[]; cmd: string; order: number };
-  readyCheck: { cmd: string; check: '200' | 'ROWS' };
 };
 
 export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
@@ -39,7 +38,6 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: '',
       order: 2,
     },
-    readyCheck: { cmd: '', check: '200' },
   },
   {
     service: 'postgres',
@@ -61,7 +59,6 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: 'postgres -c max_connections=200 -c logging_collector=on -c log_min_messages=LOG -c log_directory=/var/log/postgresql',
       order: 0,
     },
-    readyCheck: { cmd: '', check: 'ROWS' },
   },
   {
     service: 'activemq',
@@ -72,7 +69,6 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: '',
       order: 0,
     },
-    readyCheck: { cmd: '', check: '200' },
   },
   {
     service: 'transform-core-aio',
@@ -88,7 +84,6 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: '',
       order: 1,
     },
-    readyCheck: { cmd: '', check: '200' },
   },
   {
     service: 'solr6',
@@ -118,7 +113,6 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: '',
       order: 1,
     },
-    readyCheck: { cmd: '', check: '200' },
   },
   {
     service: 'proxy',
@@ -146,7 +140,6 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: '',
       order: 4,
     },
-    readyCheck: { cmd: '', check: '200' },
   },
   {
     service: 'content-app',
@@ -157,6 +150,5 @@ export const ALFRESCO_7_2_CONFIGURATION: ServiceConfiguration[] = [
       cmd: '',
       order: 1,
     },
-    readyCheck: { cmd: '', check: '200' },
   },
 ];

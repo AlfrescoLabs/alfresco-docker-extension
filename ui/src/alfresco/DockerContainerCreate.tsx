@@ -13,22 +13,30 @@ import PlayIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import React, { useEffect, useReducer, Reducer } from 'react';
 import { DockerContainerList } from './DockerContainerList';
-import { ServiceStore, Action, AlfrescoStates, AlfrescoState } from './types';
+import { ServiceStore, Action, AlfrescoStates } from './types';
 import { resources } from '../helper/resources';
 import {
   serviceReducer,
   defaultAlfrescoState,
   getAlfrescoServices,
-  AppStateQueries,
-} from './alfrescoServices';
+} from './services';
+import {
+  canRun,
+  isRunning,
+  canStop,
+  isLoading,
+  isStopping,
+  isError,
+} from './queryState';
 import { runContainers, stopContainers } from '../helper/cli';
 import { ALFRESCO_7_2_CONFIGURATION } from './configuration';
+
 const CommandPanel = ({ alfrescoState, dispatch }) => {
   return (
     <React.Fragment>
       <Stack direction="row" spacing={2}>
         <Button
-          disabled={!AppStateQueries.canRun(alfrescoState)}
+          disabled={!canRun(alfrescoState)}
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
@@ -37,14 +45,10 @@ const CommandPanel = ({ alfrescoState, dispatch }) => {
           }}
           startIcon={<PlayIcon />}
         >
-          {alfrescoState === AlfrescoStates.NOT_ACTIVE ||
-          alfrescoState === AlfrescoStates.ERROR ||
-          alfrescoState === AlfrescoStates.STOPPING
-            ? 'Run'
-            : 'Running...'}
+          {!isRunning(alfrescoState) ? 'Run' : 'Running...'}
         </Button>
         <Button
-          disabled={!AppStateQueries.canStop(alfrescoState)}
+          disabled={!canStop(alfrescoState)}
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
@@ -61,10 +65,7 @@ const CommandPanel = ({ alfrescoState, dispatch }) => {
 };
 
 const FeedbackPanel = ({ alfrescoState }) => {
-  if (
-    AppStateQueries.isLoading(alfrescoState) ||
-    AppStateQueries.isStopping(alfrescoState)
-  )
+  if (isLoading(alfrescoState) || isStopping(alfrescoState))
     return (
       <Box
         sx={{
@@ -89,12 +90,9 @@ export const DockerContainerCreate = () => {
     serviceReducer,
     defaultAlfrescoState(ALFRESCO_7_2_CONFIGURATION)
   );
-  function isError(state: AlfrescoState): boolean {
-    return state === AlfrescoStates.ERROR;
-  }
+
   const refreshContainers = async () => {
     let result = await getAlfrescoServices(ALFRESCO_7_2_CONFIGURATION);
-    console.log(result);
     dispatch({ type: 'REFRESH_SERVICE_STATE', payload: result });
   };
 
