@@ -11,48 +11,63 @@ import {
 
 import PlayIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
-import React, { useEffect, useReducer, Reducer } from 'react';
+import React, { useEffect, useReducer, Reducer, useState } from 'react';
 import { DockerContainerList } from './DockerContainerList';
-
+import { ServiceStore, Action, AlfrescoStates } from './types';
 import { resources } from '../helper/resources';
 import {
   serviceReducer,
   defaultAlfrescoState,
   getAlfrescoServices,
-  AppStateQueries,
-  ServiceStore,
-  Action,
-  AlfrescoStates,
-  AlfrescoState,
-} from './alfrescoServices';
+} from './services';
+import {
+  canRun,
+  isRunning,
+  canStop,
+  isLoading,
+  isStopping,
+  isError,
+} from './queryState';
 import { runContainers, stopContainers } from '../helper/cli';
-const CommandPanel = ({ alfrescoState, dispatch }) => {
+import {
+  ALFRESCO_7_3_CONFIGURATION,
+  ALFRESCO_7_2_CONFIGURATION,
+} from './configuration';
+
+function commands(alfresco: ServiceStore, dispatch) {
+  return {
+    run: () => {
+      runContainers(alfresco.configuration);
+      dispatch({ type: 'START_ALFRESCO' });
+    },
+    stop: () => {
+      stopContainers(alfresco.configuration);
+      dispatch({ type: 'STOP_ALFRESCO' });
+    },
+  };
+}
+
+const CommandPanel = ({ alfrescoState, commands }) => {
   return (
     <React.Fragment>
       <Stack direction="row" spacing={2}>
         <Button
-          disabled={!AppStateQueries.canRun(alfrescoState)}
+          disabled={!canRun(alfrescoState)}
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
-            runContainers();
-            dispatch({ type: 'START_ALFRESCO' });
+            commands.run();
           }}
           startIcon={<PlayIcon />}
         >
-          {alfrescoState === AlfrescoStates.NOT_ACTIVE ||
-          alfrescoState === AlfrescoStates.ERROR ||
-          alfrescoState === AlfrescoStates.STOPPING
-            ? 'Run'
-            : 'Running...'}
+          {!isRunning(alfrescoState) ? 'Run' : 'Running...'}
         </Button>
         <Button
-          disabled={!AppStateQueries.canStop(alfrescoState)}
+          disabled={!canStop(alfrescoState)}
           variant="contained"
           onClick={(e) => {
             e.preventDefault();
-            stopContainers();
-            dispatch({ type: 'STOP_ALFRESCO' });
+            commands.stop();
           }}
           startIcon={<StopIcon />}
         >
@@ -64,10 +79,7 @@ const CommandPanel = ({ alfrescoState, dispatch }) => {
 };
 
 const FeedbackPanel = ({ alfrescoState }) => {
-  if (
-    AppStateQueries.isLoading(alfrescoState) ||
-    AppStateQueries.isStopping(alfrescoState)
-  )
+  if (isLoading(alfrescoState) || isStopping(alfrescoState))
     return (
       <Box
         sx={{
@@ -88,15 +100,16 @@ const FeedbackPanel = ({ alfrescoState }) => {
 };
 
 export const DockerContainerCreate = () => {
+  const [configuration, setConfiguration] = useState(
+    ALFRESCO_7_3_CONFIGURATION
+  );
   const [alfresco, dispatch] = useReducer<Reducer<ServiceStore, Action>>(
     serviceReducer,
-    defaultAlfrescoState()
+    defaultAlfrescoState(configuration)
   );
-  function isError(state: AlfrescoState): boolean {
-    return state === AlfrescoStates.ERROR;
-  }
+
   const refreshContainers = async () => {
-    let result = await getAlfrescoServices();
+    let result = await getAlfrescoServices(configuration);
     dispatch({ type: 'REFRESH_SERVICE_STATE', payload: result });
   };
 
@@ -107,7 +120,7 @@ export const DockerContainerCreate = () => {
 
   // refresh every 1.5 secs to check state
   useEffect(() => {
-    let timer = setTimeout(refreshContainers, 2000);
+    let timer = setTimeout(refreshContainers, 1500);
     if (alfresco.alfrescoState === AlfrescoStates.NOT_ACTIVE)
       clearTimeout(timer);
     return () => {
@@ -132,7 +145,7 @@ export const DockerContainerCreate = () => {
       {errorComponent}
       <CommandPanel
         alfrescoState={alfresco.alfrescoState}
-        dispatch={dispatch}
+        commands={commands(alfresco, dispatch)}
       />
       <FeedbackPanel alfrescoState={alfresco.alfrescoState} />
       <DockerContainerList alfresco={alfresco} />

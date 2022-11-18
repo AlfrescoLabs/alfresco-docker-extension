@@ -1,15 +1,5 @@
 import { createDockerDesktopClient } from '@docker/extension-api-client';
-import {
-  ACTIVEMQ_IMAGE_TAG,
-  POSTGRES_IMAGE_TAG,
-  REPO_IMAGE_TAG,
-  SOLR_IMAGE_TAG,
-  TRANSFORM_IMAGE_TAG,
-  ServiceDescriptor,
-  alfrescoServices,
-  ACA_IMAGE_TAG,
-  PROXY_IMAGE_TAG,
-} from '../helper/constants';
+import { ServiceConfiguration } from '../alfresco/types';
 // DOCKER DESKTOP Client
 const ddClient = createDockerDesktopClient();
 
@@ -27,63 +17,51 @@ export const getDockerInfo = async () => {
   }
 };
 
-export async function alfrescoContainers(): Promise<ServiceDescriptor[]> {
-  function dockerAPIToContainerDesc(dockerAPIContainer): ServiceDescriptor {
-    const [imageName, imageTag] = dockerAPIContainer.Image.split(':');
-    return {
-      name: dockerAPIContainer.Names[0].substring(1),
-      state: dockerAPIContainer.State.toUpperCase(),
-      status: dockerAPIContainer.Status,
-      image: dockerAPIContainer.Image,
-      imageName,
-      version: imageTag,
-      id: dockerAPIContainer.Id,
-    };
-  }
-  let containerList = (await ddClient.docker.listContainers({
+export async function listAllContainers(
+  configuration: ServiceConfiguration[],
+  network: string = 'alfresco'
+): Promise<any[]> {
+  const containerList = (await ddClient.docker.listContainers({
     all: true,
     filters: JSON.stringify({
-      name: alfrescoServices,
-      network: ['alfresco'],
+      name: configuration.map((s) => s.service),
+      network: [network],
     }),
   })) as any[];
-
-  const containers: ServiceDescriptor[] = containerList.map((e) => {
-    return dockerAPIToContainerDesc(e);
-  });
-  return containers;
+  return containerList;
 }
 
 // Create 'alfresco' network if it didn't exist
-export const createNetwork = async () => {
+export const createNetwork = async (name: string) => {
   try {
-    await ddClient.docker.cli.exec('network', ['inspect', 'alfresco']);
+    await ddClient.docker.cli.exec('network', ['inspect', name]);
   } catch (err) {
-    await ddClient.docker.cli.exec('network', ['create', 'alfresco']);
+    await ddClient.docker.cli.exec('network', ['create', name]);
   }
 };
 
-export async function runContainers() {
-  await createNetwork();
-  await deployDb();
-  await deployMq();
-  await deployTransform();
-  await deploySolr();
-
-  await waitTillReadyDb();
-  await deployRepository();
-
-  await deployAca();
-  await deployProxy();
-
+function groupByRunOrder(
+  services: ServiceConfiguration[]
+): ServiceConfiguration[][] {
+  return Object.values(
+    services.reduce((acc, s) => {
+      (acc[s.run.order] = acc[s.run.order] || []).push(s);
+      return acc;
+    }, {})
+  );
+}
+export async function runContainers(services: ServiceConfiguration[]) {
+  await createNetwork('alfresco');
+  const runGroups = groupByRunOrder(services);
+  runGroups.forEach(async (s) => {
+    await Promise.all(s.map(deployService));
+  });
 }
 
 // Stop running containers in 'alfresco' network
-export const stopContainers = async () => {
-  const containers = await alfrescoContainers();
-  const containersId = containers
-    .filter((c) => c.state !== 'NO_CONTAINER')
-    .map((c) => c.id);
+export const stopContainers = async (services: ServiceConfiguration[]) => {
+  const containers = await listAllContainers(services);
+  const containersId = containers.map((c) => c.Id);
   try {
     await ddClient.docker.cli.exec('stop', containersId);
     await ddClient.docker.cli.exec('rm', containersId);
@@ -106,333 +84,41 @@ export const removeContainer = async (containerName: string) => {
     await ddClient.docker.cli.exec('container', ['rm', '-v', containerName]);
   }
 };
-
-export async function deployDb() {
+export async function deployService(config: ServiceConfiguration) {
   const running = await ddClient.docker.cli.exec('ps', [
     '-f',
     'status=running',
     '-f',
-    'name=postgres',
+    'name=' + config.service,
     '-f',
     'network=alfresco',
     '-q',
   ]);
-
   if (running.stdout.length === 0) {
-    await removeContainer('postgres');
-
+    await removeContainer(config.service);
     await ddClient.docker.cli.exec('run', [
       '-d',
-      '--memory',
-      '768m',
       '--name',
-      'postgres',
-      '-p',
-      '5432:5432',
-      '-e',
-      'POSTGRES_PASSWORD=alfresco',
-      '-e',
-      'POSTGRES_USER=alfresco',
-      '-e',
-      'POSTGRES_DB=alfresco',
+      config.service,
       '--network',
       'alfresco',
-      POSTGRES_IMAGE_TAG,
-      'postgres -c max_connections=200 -c logging_collector=on -c log_min_messages=LOG -c log_directory=/var/log/postgresql',
+      ...config.run.options,
+      config.image,
+      config.run.cmd,
     ]);
   }
 }
 
-export const deployMq = async () => {
-  const running = await ddClient.docker.cli.exec('ps', [
-    '-f',
-    'status=running',
-    '-f',
-    'name=activemq',
-    '-f',
-    'network=alfresco',
-    '-q',
-  ]);
-
-  if (running.stdout.length === 0) {
-    await removeContainer('activemq');
-
-    await ddClient.docker.cli.exec('run', [
-      '-d',
-      '--memory',
-      '768m',
-      '--name',
-      'activemq',
-      '-p',
-      '8161:8161',
-      '--network',
-      'alfresco',
-      ACTIVEMQ_IMAGE_TAG,
-    ]);
-  }
-};
-
-export const deployTransform = async () => {
-  const running = await ddClient.docker.cli.exec('ps', [
-    '-f',
-    'status=running',
-    '-f',
-    'name=transform-core-aio',
-    '-f',
-    'network=alfresco',
-    '-q',
-  ]);
-
-  if (running.stdout.length === 0) {
-    await removeContainer('transform-core-aio');
-
-    await ddClient.docker.cli.exec('run', [
-      '-d',
-      '--memory',
-      '1536m',
-      '--name',
-      'transform-core-aio',
-      '-e',
-      'JAVA_OPTS="-XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80 -Dserver.tomcat.threads.max=12 -Dserver.tomcat.threads.min=4 -Dlogging.level.org.alfresco.transform.router.TransformerDebug=ERROR"',
-      '--network',
-      'alfresco',
-      TRANSFORM_IMAGE_TAG,
-    ]);
-  }
-};
-
-export const deployRepository = async () => {
-  const running = await ddClient.docker.cli.exec('ps', [
-    '-f',
-    'status=running',
-    '-f',
-    'name=alfresco',
-    '-f',
-    'network=alfresco',
-    '-q',
-  ]);
-
-  if (running.stdout.length === 0) {
-    await removeContainer('alfresco');
-
-    await ddClient.docker.cli.exec('run', [
-      '-d',
-      '--memory',
-      '3328m',
-      '--name',
-      'alfresco',
-      '-e',
-      'JAVA_TOOL_OPTIONS="-Dencryption.keystore.type=JCEKS -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding -Dencryption.keyAlgorithm=DESede -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore -Dmetadata-keystore.password=mp6yc0UD9e -Dmetadata-keystore.aliases=metadata -Dmetadata-keystore.metadata.password=oKIWzVdEdA -Dmetadata-keystore.metadata.algorithm=DESede"',
-      '-e',
-      'JAVA_OPTS="-Ddb.driver=org.postgresql.Driver -Ddb.username=alfresco -Ddb.password=alfresco -Ddb.url=jdbc:postgresql://postgres:5432/alfresco -Dsolr.host=solr6 -Dsolr.port=8983 -Dsolr.http.connection.timeout=1000 -Dsolr.secureComms=secret -Dsolr.sharedSecret=secret -Dsolr.base.url=/solr -Dindex.subsystem.name=solr6 -Dshare.host=127.0.0.1 -Dshare.port=8080 -Dalfresco.host=localhost -Dalfresco.port=8080 -Daos.baseUrlOverwrite=http://localhost:8080/alfresco/aos -Dmessaging.broker.url=\'failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true\' -Ddeployment.method=DOCKER_COMPOSE -DlocalTransform.core-aio.url=http://transform-core-aio:8090/ -Dcsrf.filter.enabled=false -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"',
-      '--network',
-      'alfresco',
-      REPO_IMAGE_TAG,
-    ]);
-  }
-};
-
-export const deploySolr = async () => {
-  const running = await ddClient.docker.cli.exec('ps', [
-    '-f',
-    'status=running',
-    '-f',
-    'name=solr6',
-    '-f',
-    'network=alfresco',
-    '-q',
-  ]);
-
-  if (running.stdout.length === 0) {
-    await removeContainer('solr6');
-
-    await ddClient.docker.cli.exec('run', [
-      '-d',
-      '--memory',
-      '1024m',
-      '--name',
-      'solr6',
-      '-e',
-      'SOLR_ALFRESCO_HOST=alfresco',
-      '-e',
-      'SOLR_ALFRESCO_PORT=8080',
-      '-e',
-      'SOLR_SOLR_HOST=solr6',
-      '-e',
-      'SOLR_SOLR_PORT=8983',
-      '-e',
-      'SOLR_CREATE_ALFRESCO_DEFAULTS=alfresco,archive',
-      '-e',
-      'ALFRESCO_SECURE_COMMS=secret',
-      '-e',
-      'JAVA_TOOL_OPTIONS="-Dalfresco.secureComms.secret=secret"',
-      '-p',
-      '8083:8983',
-      '--network',
-      'alfresco',
-      SOLR_IMAGE_TAG,
-    ]);
-  }
-};
-
-export const deployAca = async () => {
-  const running = await ddClient.docker.cli.exec('ps', [
-    '-f',
-    'status=running',
-    '-f',
-    'name=content-app',
-    '-f',
-    'network=alfresco',
-    '-q',
-  ]);
-
-  if (running.stdout.length === 0) {
-    await removeContainer('content-app');
-
-    await ddClient.docker.cli.exec('run', [
-      '-d',
-      '--memory',
-      '256m',
-      '--name',
-      'content-app',
-      '--network',
-      'alfresco',
-      ACA_IMAGE_TAG,
-    ]);
-  }
-};
-
-export const deployProxy = async () => {
-  const running = await ddClient.docker.cli.exec('ps', [
-    '-f',
-    'status=running',
-    '-f',
-    'name=proxy',
-    '-f',
-    'network=alfresco',
-    '-q',
-  ]);
-
-  if (running.stdout.length === 0) {
-    await removeContainer('proxy');
-
-    await ddClient.docker.cli.exec('run', [
-      '-d',
-      '--memory',
-      '128m',
-      '--name',
-      'proxy',
-      '-e',
-      'DISABLE_PROMETHEUS=true',
-      '-e',
-      'DISABLE_SYNCSERVICE=true',
-      '-e',
-      'DISABLE_ADW=true',
-      '-e',
-      'DISABLE_CONTROL_CENTER=true',
-      '-e',
-      'DISABLE_SHARE=true',
-      '-e',
-      'ENABLE_CONTENT_APP=true',
-      '-p',
-      '8080:8080',
-      '--network',
-      'alfresco',
-      PROXY_IMAGE_TAG,
-    ]);
-  }
-};
-
-export const readyRepo = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'alfresco',
-      'bash -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8080/alfresco/s/api/server"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readySolr = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'solr6',
-      'bash -c "curl -s -L -o /dev/null --max-time 1 -w "%{http_code}" --header "X-Alfresco-Search-Secret:secret" http://localhost:8983/solr"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readyActiveMq = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'activemq',
-      'bash -c "curl -u admin:admin -L -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8161"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readyTransform = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'transform-core-aio',
-      'bash -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8090"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readyAca = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'content-app',
-      'sh -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8080/"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readyProxy = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'proxy',
-      'sh -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8080/content-app/"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
-
-export const readyDb = async () => {
-  try {
-    const result = await ddClient.docker.cli.exec('exec', [
-      'postgres',
-      'psql -U alfresco -c "select 1 where false"',
-    ]);
-    return result.stdout;
-  } catch (err) {
-    //console.error(JSON.stringify(err));
-    return 'false';
-  }
-};
+export function readyCheckFn(service: string, cmd: string) {
+  return async () => {
+    try {
+      const result = await ddClient.docker.cli.exec('exec', [service, cmd]);
+      return result.stdout;
+    } catch (err) {
+      return 'false';
+    }
+  };
+}
 
 export const waitTillReadyDb = async () => {
   try {
@@ -447,7 +133,6 @@ export const waitTillReadyDb = async () => {
 };
 
 export const viewContainer = async (id: string) => {
-  console.log('view: ' + id);
   await ddClient.desktopUI.navigate.viewContainer(id);
 };
 
