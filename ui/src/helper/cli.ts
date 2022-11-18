@@ -64,6 +64,8 @@ export const stopContainers = async (services: ServiceConfiguration[]) => {
   const containersId = containers.map((c) => c.Id);
   try {
     await ddClient.docker.cli.exec('stop', containersId);
+    // Remove also volumes created by the containers
+    containersId.unshift('-v');
     await ddClient.docker.cli.exec('rm', containersId);
   } catch (e) {
     console.warn(e);
