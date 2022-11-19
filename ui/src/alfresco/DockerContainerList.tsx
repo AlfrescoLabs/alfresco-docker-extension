@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Chip,
+  colors,
   Stack,
   Table,
   TableBody,
@@ -109,11 +110,19 @@ export const DockerContainerList = ({
               <TableCell scope="row">
                 {s.imageState === 'NOT_AVAILABLE' ? (
                   <CloudOff
-                    style={{ verticalAlign: 'middle', marginRight: '16px' }}
+                    style={{
+                      verticalAlign: 'middle',
+                      marginRight: '16px',
+                      color: colors.amber[500],
+                    }}
                   ></CloudOff>
                 ) : (
                   <CloudDone
-                    style={{ verticalAlign: 'middle', marginRight: '16px' }}
+                    style={{
+                      verticalAlign: 'middle',
+                      marginRight: '16px',
+                      color: colors.green[400],
+                    }}
                   ></CloudDone>
                 )}
                 <span>{s.image}</span>

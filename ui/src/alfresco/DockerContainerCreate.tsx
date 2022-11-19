@@ -79,7 +79,7 @@ const CommandPanel = ({ alfrescoState, commands }) => {
           }}
           startIcon={<PlayIcon />}
         >
-          {!isRunning(alfrescoState) ? 'Run' : 'Running...'}
+          Run
         </Button>
         <Button
           disabled={!canStop(alfrescoState)}
@@ -90,7 +90,7 @@ const CommandPanel = ({ alfrescoState, commands }) => {
           }}
           startIcon={<StopIcon />}
         >
-          {alfrescoState !== AlfrescoStates.STOPPING ? 'Stop' : 'Stopping...'}
+          Stop
         </Button>
       </Stack>
     </React.Fragment>
@@ -98,28 +98,50 @@ const CommandPanel = ({ alfrescoState, commands }) => {
 };
 
 const FeedbackPanel = ({ alfrescoState }) => {
-  if (
-    isLoading(alfrescoState) ||
-    isStopping(alfrescoState) ||
-    isInstalling(alfrescoState)
-  )
-    return (
-      <Box
-        sx={{
-          marginBottom: '15px',
-          textAlign: 'center',
-        }}
-      >
-        <Typography>{alfrescoState}</Typography>
+  let message: string = '';
+  let actionInProgress: boolean = false;
+
+  if (isInstalling(alfrescoState)) {
+    message = 'Pulling images, it may take few minutes... ';
+    actionInProgress = true;
+  }
+  if (isLoading(alfrescoState)) {
+    message = 'Starting Alfresco containers...';
+    actionInProgress = true;
+  }
+  if (isStopping(alfrescoState)) {
+    message = 'Stopping Alfresco containers...';
+    actionInProgress = true;
+  }
+  return (
+    <Box
+      sx={{
+        paddingLeft: '30px',
+        textAlign: 'justify',
+      }}
+    >
+      {actionInProgress ? (
         <CircularProgress
-          size={30}
           sx={{
+            verticalAlign: 'middle',
             color: colors.blue[500],
           }}
         />
-      </Box>
-    );
-  return <></>;
+      ) : (
+        ''
+      )}
+      <span
+        style={{
+          paddingLeft: '1rem',
+          marginLeft: '1rem',
+          verticalAlign: 'middle',
+          lineHeight: 'normal',
+        }}
+      >
+        {message}
+      </span>
+    </Box>
+  );
 };
 
 export const DockerContainerCreate = () => {

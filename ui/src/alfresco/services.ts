@@ -92,17 +92,12 @@ function updateAlfrescoAppState(store: ServiceStore) {
       );
       return store;
     }
-    /*if (
-      store.services.some(
-        (c) =>
-          c.state === 'DEAD' ||
-          c.state === 'EXITED' ||
-          c.state === 'NO_CONTAINER'
-      )
+    if (
+      store.services.some((c) => c.state === 'DEAD' || c.state === 'EXITED')
     ) {
       store.alfrescoState = AlfrescoStates.ERROR;
       return store;
-    }*/
+    }
   }
   return store;
 }
