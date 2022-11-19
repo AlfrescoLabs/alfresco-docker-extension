@@ -30,7 +30,17 @@ export async function listAllContainers(
   })) as any[];
   return containerList;
 }
-
+export async function listAllImages(
+  configuration: ServiceConfiguration[],
+  network: string = 'alfresco'
+): Promise<any[]> {
+  const containerList = (await ddClient.docker.listImages({
+    filters: JSON.stringify({
+      reference: configuration.map((s) => s.image),
+    }),
+  })) as any[];
+  return containerList;
+}
 // Create 'alfresco' network if it didn't exist
 export const createNetwork = async (name: string) => {
   try {
@@ -56,6 +66,10 @@ export async function runContainers(services: ServiceConfiguration[]) {
   runGroups.forEach(async (s) => {
     await Promise.all(s.map(deployService));
   });
+}
+
+export async function setup(services: ServiceConfiguration[]) {
+  await Promise.all(services.map(pullImage));
 }
 
 // Stop running containers in 'alfresco' network
@@ -110,7 +124,9 @@ export async function deployService(config: ServiceConfiguration) {
     ]);
   }
 }
-
+async function pullImage(config: ServiceConfiguration) {
+  await ddClient.docker.cli.exec('pull', [config.image]);
+}
 export function readyCheckFn(service: string, cmd: string) {
   return async () => {
     try {

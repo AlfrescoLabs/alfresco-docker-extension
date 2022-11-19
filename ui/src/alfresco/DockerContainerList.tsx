@@ -18,6 +18,12 @@ import { resources } from '../helper/resources';
 
 import React from 'react';
 import { AlfrescoStates, ServiceStore, ContainerState } from './types';
+import {
+  CloudDone,
+  CloudDownloadOutlined,
+  CloudOff,
+  VerticalAlignCenter,
+} from '@mui/icons-material';
 
 const startAlfresco = async () => {
   await openAlfrescoInBrowser();
@@ -98,10 +104,19 @@ export const DockerContainerList = ({
           {alfresco.services.map((s) => (
             <TableRow
               key={s.image}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+              //sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
-              <TableCell component="th" scope="row">
-                {s.image}
+              <TableCell scope="row">
+                {s.imageState === 'NOT_AVAILABLE' ? (
+                  <CloudOff
+                    style={{ verticalAlign: 'middle', marginRight: '16px' }}
+                  ></CloudOff>
+                ) : (
+                  <CloudDone
+                    style={{ verticalAlign: 'middle', marginRight: '16px' }}
+                  ></CloudDone>
+                )}
+                <span>{s.image}</span>
               </TableCell>
               <TableCell>{s.version}</TableCell>
               <TableCell>{s.name}</TableCell>

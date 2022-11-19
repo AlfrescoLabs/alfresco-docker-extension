@@ -19,6 +19,7 @@ import {
   serviceReducer,
   defaultAlfrescoState,
   getAlfrescoServices,
+  getAlfrescoImages,
 } from './services';
 import {
   canRun,
@@ -27,12 +28,15 @@ import {
   isLoading,
   isStopping,
   isError,
+  needSetup,
+  isInstalling,
 } from './queryState';
-import { runContainers, stopContainers } from '../helper/cli';
+import { setup, runContainers, stopContainers } from '../helper/cli';
 import {
   ALFRESCO_7_3_CONFIGURATION,
   ALFRESCO_7_2_CONFIGURATION,
 } from './configuration';
+import { CloudDownloadSharp } from '@mui/icons-material';
 
 function commands(alfresco: ServiceStore, dispatch) {
   return {
@@ -44,6 +48,10 @@ function commands(alfresco: ServiceStore, dispatch) {
       stopContainers(alfresco.configuration);
       dispatch({ type: 'STOP_ALFRESCO' });
     },
+    setup: () => {
+      setup(alfresco.configuration);
+      dispatch({ type: 'DOWNLOAD_IMAGES' });
+    },
   };
 }
 
@@ -51,6 +59,17 @@ const CommandPanel = ({ alfrescoState, commands }) => {
   return (
     <React.Fragment>
       <Stack direction="row" spacing={2}>
+        <Button
+          disabled={!needSetup(alfrescoState)}
+          variant="contained"
+          onClick={(e) => {
+            e.preventDefault();
+            commands.setup();
+          }}
+          startIcon={<CloudDownloadSharp />}
+        >
+          Setup
+        </Button>
         <Button
           disabled={!canRun(alfrescoState)}
           variant="contained"
@@ -79,7 +98,11 @@ const CommandPanel = ({ alfrescoState, commands }) => {
 };
 
 const FeedbackPanel = ({ alfrescoState }) => {
-  if (isLoading(alfrescoState) || isStopping(alfrescoState))
+  if (
+    isLoading(alfrescoState) ||
+    isStopping(alfrescoState) ||
+    isInstalling(alfrescoState)
+  )
     return (
       <Box
         sx={{
@@ -112,19 +135,31 @@ export const DockerContainerCreate = () => {
     let result = await getAlfrescoServices(configuration);
     dispatch({ type: 'REFRESH_SERVICE_STATE', payload: result });
   };
-
+  const refreshImages = async () => {
+    let result = await getAlfrescoImages(configuration);
+    dispatch({ type: 'REFRESH_IMAGE_STATE', payload: result });
+  };
   // run refresh containers on load
   useEffect(() => {
+    refreshImages();
     refreshContainers();
   }, []);
 
   // refresh every 1.5 secs to check state
   useEffect(() => {
-    let timer = setTimeout(refreshContainers, 1500);
-    if (alfresco.alfrescoState === AlfrescoStates.NOT_ACTIVE)
-      clearTimeout(timer);
+    let imageChecker;
+    let timer;
+    if (alfresco.alfrescoState !== AlfrescoStates.NOT_ACTIVE) {
+      if (isInstalling(alfresco.alfrescoState)) {
+        imageChecker = setTimeout(refreshImages, 1500);
+      } else {
+        timer = setTimeout(refreshContainers, 1500);
+      }
+    }
+
     return () => {
       clearTimeout(timer);
+      clearTimeout(imageChecker);
     };
   }, [alfresco]);
 
