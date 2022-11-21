@@ -12,6 +12,16 @@ export type ServiceConfiguration = {
   image: string;
   run: { options: string[]; cmd: string; order: number };
 };
+export type ImageState =
+  | 'NOT_AVAILABLE'
+  | 'DOWNLOADED'
+  | 'DOWNLOADING'
+  | 'ERROR';
+
+export type ImageInfo = {
+  name: string;
+  state: ImageState;
+};
 export interface Service {
   id: string;
   name: string;
@@ -19,10 +29,15 @@ export interface Service {
   status: string;
   image: string;
   imageName: string;
+  imageState: ImageState;
   version: string;
 }
+// NOT_ACTIVE -> STARTING (ALL IMAGES ARE LOCALLY AVAILABLE)
+// NOT_ACTIVE -> INSTALLING -> INSTALLED -> STARTING
 export const AlfrescoStates = Object.freeze({
   NOT_ACTIVE: 'NOT_ACTIVE',
+  INSTALLING: 'INSTALLING',
+  INSTALLED: 'INSTALLED',
   STARTING: 'STARTING',
   UP_AND_RUNNING: 'UP_AND_RUNNING',
   STOPPING: 'STOPPING',

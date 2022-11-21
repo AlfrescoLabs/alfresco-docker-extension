@@ -1,4 +1,4 @@
-import { listAllContainers } from '../helper/cli';
+import { listAllContainers, listAllImages } from '../helper/cli';
 import {
   AlfrescoStates,
   Service,
@@ -6,6 +6,8 @@ import {
   Action,
   ContainerState,
   ServiceConfiguration,
+  ImageInfo,
+  ImageState,
 } from './types';
 import { isReady } from './checkServiceReadiness';
 
@@ -18,6 +20,7 @@ function emptyServiceDescFor(name: string, image: string): Service {
     status: '',
     image: image,
     imageName,
+    imageState: 'NOT_AVAILABLE',
     version,
   };
 }
@@ -33,7 +36,7 @@ export function defaultAlfrescoState(
   };
 }
 
-function updateStateWith(data: Service[], state: ServiceStore): ServiceStore {
+function updateContainers(data: Service[], state: ServiceStore): ServiceStore {
   for (let curr of state.services) {
     let contState: ContainerState = 'NO_CONTAINER';
 
@@ -50,16 +53,31 @@ function updateStateWith(data: Service[], state: ServiceStore): ServiceStore {
   }
   return state;
 }
+function updateImages(data: ImageInfo[], state: ServiceStore): ServiceStore {
+  for (let curr of state.services) {
+    curr.imageState = 'NOT_AVAILABLE';
+
+    for (let img of data) {
+      if (img.name === curr.image) {
+        curr.imageState = img.state;
+        break;
+      }
+    }
+  }
+
+  return state;
+}
 
 function updateAlfrescoAppState(store: ServiceStore) {
   if (store.services.every((c) => c.state === 'READY')) {
     store.alfrescoState = AlfrescoStates.UP_AND_RUNNING;
     return store;
   }
-
-  if (store.services.every((c) => c.state === 'NO_CONTAINER')) {
-    store.alfrescoState = AlfrescoStates.NOT_ACTIVE;
-    return store;
+  if (store.alfrescoState === AlfrescoStates.STOPPING) {
+    if (store.services.every((c) => c.state === 'NO_CONTAINER')) {
+      store.alfrescoState = AlfrescoStates.INSTALLED;
+      return store;
+    }
   }
 
   if (store.alfrescoState !== AlfrescoStates.STOPPING) {
@@ -75,12 +93,7 @@ function updateAlfrescoAppState(store: ServiceStore) {
       return store;
     }
     if (
-      store.services.some(
-        (c) =>
-          c.state === 'DEAD' ||
-          c.state === 'EXITED' ||
-          c.state === 'NO_CONTAINER'
-      )
+      store.services.some((c) => c.state === 'DEAD' || c.state === 'EXITED')
     ) {
       store.alfrescoState = AlfrescoStates.ERROR;
       return store;
@@ -88,7 +101,13 @@ function updateAlfrescoAppState(store: ServiceStore) {
   }
   return store;
 }
-
+function checkIfAllImagesAreLocallyAvailable(
+  store: ServiceStore
+): ServiceStore {
+  if (store.services.every((s) => s.imageState === 'DOWNLOADED'))
+    store.alfrescoState = 'INSTALLED';
+  return store;
+}
 export function serviceReducer(
   state: ServiceStore,
   action: Action
@@ -96,7 +115,12 @@ export function serviceReducer(
   let newState: ServiceStore = { ...state, errors: [] };
   switch (action.type) {
     case 'REFRESH_SERVICE_STATE': {
-      return updateAlfrescoAppState(updateStateWith(action.payload, newState));
+      return updateAlfrescoAppState(updateContainers(action.payload, newState));
+    }
+    case 'REFRESH_IMAGE_STATE': {
+      return checkIfAllImagesAreLocallyAvailable(
+        updateImages(action.payload, newState)
+      );
     }
     case 'START_ALFRESCO': {
       newState.alfrescoState = AlfrescoStates.STARTING;
@@ -104,7 +128,10 @@ export function serviceReducer(
     }
     case 'STOP_ALFRESCO': {
       newState.alfrescoState = AlfrescoStates.STOPPING;
-
+      return newState;
+    }
+    case 'DOWNLOAD_IMAGES': {
+      newState.alfrescoState = AlfrescoStates.INSTALLING;
       return newState;
     }
   }
@@ -119,6 +146,7 @@ function dockerAPIToContainerDesc(dockerAPIContainer): Service {
     status: dockerAPIContainer.Status,
     image: dockerAPIContainer.Image,
     imageName,
+    imageState: 'DOWNLOADED',
     version: imageTag,
     id: dockerAPIContainer.Id,
   };
@@ -139,6 +167,19 @@ export async function getAlfrescoServices(
         })
     );
     return services;
+  } catch (err) {
+    console.log(err);
+  }
+}
+export async function getAlfrescoImages(
+  serviceConf: ServiceConfiguration[]
+): Promise<ImageInfo[]> {
+  try {
+    const imageList = await listAllImages(serviceConf);
+    const images: ImageInfo[] = imageList.map((i) => {
+      return { name: i.RepoTags[0], state: 'DOWNLOADED' };
+    });
+    return images;
   } catch (err) {
     console.log(err);
   }
