@@ -5,7 +5,7 @@ import {
   Button,
   CircularProgress,
   colors,
-  Stack
+  Stack,
 } from '@mui/material';
 
 import PlayIcon from '@mui/icons-material/PlayArrow';
@@ -142,9 +142,11 @@ const FeedbackPanel = ({ alfrescoState }) => {
   );
 };
 
-export const DockerContainerCreate = ({dockerInfo}) => {
+export const DockerContainerCreate = ({ dockerInfo }) => {
   const [configuration] = useState(
-    dockerInfo.arch === 'x86_64' ? ALFRESCO_7_3_CONFIGURATION : ALFRESCO_7_3_CONFIGURATION_AARCH64
+    dockerInfo.arch === 'aarch64'
+      ? ALFRESCO_7_3_CONFIGURATION_AARCH64
+      : ALFRESCO_7_3_CONFIGURATION
   );
   const [alfresco, dispatch] = useReducer<Reducer<ServiceStore, Action>>(
     serviceReducer,

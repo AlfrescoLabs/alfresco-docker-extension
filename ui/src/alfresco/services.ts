@@ -7,7 +7,6 @@ import {
   ContainerState,
   ServiceConfiguration,
   ImageInfo,
-  ImageState,
 } from './types';
 import { isReady } from './checkServiceReadiness';
 

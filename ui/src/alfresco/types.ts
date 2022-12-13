@@ -67,3 +67,7 @@ export type Action = {
   payload?: any;
   error?: string;
 };
+export type DockerInfo = {
+  RAM: number;
+  arch: 'none' | 'x86_64' | 'aarch64';
+};
