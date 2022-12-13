@@ -15,7 +15,7 @@ Development Recommendations:
 
 ## Enable Docker Extensions
 
-In Docker Desktop, go to `Preferences > Extensions` and check `Enable Docker Extensions`
+In Docker Desktop, go to `Preferences > Extensions` and check `Enable Docker Extensions` and `Show Docker Extensions system containers` options
 
 ## Running the extension
 
@@ -37,13 +37,9 @@ From the Docker Dashboard you can now navigate to the Extensions section.
 
 It should now list **Alfresco** as one of the available extensions.
 
-Click on **Run** button to run **Alfresco** in Docker and use <http://localhost:8080/alfresco> URL in your browser once the deployment is ready.
+Click on **Run** button to run **Alfresco** in Docker and once the deployment is ready click on **Open** button to start ACS in your browser.
 
 If you want to un-deploy Alfresco, click **Stop** button.
-
-## Known Issues
-
-- The extension doesn't work in Apple Silicon computers, since the Alfresco Docker Images are not available for that architecture
 
 ## Quick notes to get started with Development
 

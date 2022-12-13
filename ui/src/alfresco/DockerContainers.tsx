@@ -6,7 +6,6 @@ import { resources } from '../helper/resources';
 import { RAM_LIMIT } from './configuration';
 
 const enoughRAM = (dockerInfo: DockerInfo) => dockerInfo.RAM >= RAM_LIMIT;
-const rightArch = (dockerInfo: DockerInfo) => dockerInfo.arch === 'x86_64';
 
 const preconditions = [
   {
@@ -18,27 +17,20 @@ const preconditions = [
         {resources.HOME.RAM_AVAILABLE_MESSAGE + info.RAM.toFixed(2)}
       </div>
     ),
-  },
-  {
-    cond: rightArch,
-    title: 'Docker Desktop Architecture not supported!',
-    message: (info) =>
-      'Architecture ' + info.arch + ' is not supported by this extension!',
-  },
+  }
 ];
-type DockerInfo = {
+export type DockerInfo = {
   RAM: number;
-  arch: 'x86_64' | 'ARM_64';
+  arch: 'none' | 'x86_64' | 'aarch64';
 };
 export const DockerContainers = () => {
   const [dockerInfo, setDockerInfo] = useState<DockerInfo>({
     RAM: RAM_LIMIT,
-    arch: 'x86_64',
+    arch: 'none',
   });
 
   async function readDockerInfo() {
     let info = await getDockerInfo();
-
     setDockerInfo({
       RAM: info?.MemTotal / 1024 / 1024 / 1024,
       arch: info?.Architecture,
@@ -63,7 +55,7 @@ export const DockerContainers = () => {
             </Alert>
           </Box>
         ))}
-      {dockerInfo.arch === 'x86_64' && <DockerContainerCreate />}
+      { dockerInfo.arch !== 'none' && <DockerContainerCreate dockerInfo={dockerInfo}/> }
     </Stack>
   );
 };

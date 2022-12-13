@@ -5,8 +5,7 @@ import {
   Button,
   CircularProgress,
   colors,
-  Stack,
-  Typography,
+  Stack
 } from '@mui/material';
 
 import PlayIcon from '@mui/icons-material/PlayArrow';
@@ -23,7 +22,6 @@ import {
 } from './services';
 import {
   canRun,
-  isRunning,
   canStop,
   isLoading,
   isStopping,
@@ -34,7 +32,7 @@ import {
 import { setup, runContainers, stopContainers } from '../helper/cli';
 import {
   ALFRESCO_7_3_CONFIGURATION,
-  ALFRESCO_7_2_CONFIGURATION,
+  ALFRESCO_7_3_CONFIGURATION_AARCH64,
 } from './configuration';
 import { CloudDownloadSharp } from '@mui/icons-material';
 
@@ -144,9 +142,9 @@ const FeedbackPanel = ({ alfrescoState }) => {
   );
 };
 
-export const DockerContainerCreate = () => {
-  const [configuration, setConfiguration] = useState(
-    ALFRESCO_7_3_CONFIGURATION
+export const DockerContainerCreate = ({dockerInfo}) => {
+  const [configuration] = useState(
+    dockerInfo.arch === 'x86_64' ? ALFRESCO_7_3_CONFIGURATION : ALFRESCO_7_3_CONFIGURATION_AARCH64
   );
   const [alfresco, dispatch] = useReducer<Reducer<ServiceStore, Action>>(
     serviceReducer,
