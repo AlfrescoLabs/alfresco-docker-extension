@@ -1,4 +1,4 @@
-import { ServiceConfiguration, ServiceName } from './types';
+import { ServiceConfiguration } from './types';
 
 export const RAM_LIMIT = 10;
 
@@ -172,3 +172,22 @@ export const ALFRESCO_7_3_CONFIGURATION: ServiceConfiguration[] =
     },
     { name: 'postgres', image: 'postgres:14.4' },
   ]);
+export const ALFRESCO_7_3_CONFIGURATION_AARCH64: ServiceConfiguration[] =
+  createConfigurationFor([
+    {
+      name: 'alfresco',
+      image: 'angelborroy/alfresco-content-repository-community:7.3.0',
+    },
+    {
+      name: 'activemq',
+      image: 'alfresco/alfresco-activemq:5.17.1-jre11-rockylinux8',
+    },
+    { name: 'proxy', image: 'angelborroy/alfresco-acs-nginx:3.4.2' },
+    { name: 'content-app', image: 'angelborroy/alfresco-content-app:3.1.0' },
+    { name: 'solr6', image: 'angelborroy/alfresco-search-services:2.0.5.1' },
+    {
+      name: 'transform-core-aio',
+      image: 'angelborroy/alfresco-transform-core-aio:3.0.0',
+    },
+    { name: 'postgres', image: 'postgres:14.4' },
+  ]);  

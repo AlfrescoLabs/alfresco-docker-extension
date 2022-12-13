@@ -17,10 +17,10 @@ export const resources = {
     NAME: 'NAME',
     STATUS: 'STATUS',
     DETAILS: '',
-    START: 'START',
+    START: 'OPEN',
     ALFRESCO_READY_TITLE: 'Alfresco is Ready!',
     ALFRESCO_READY_MESSAGE:
-      'Click START button and use default credentials admin/admin',
+      'Click OPEN button and use default credentials admin/admin',
     ALFRESCO_STARTING_TITLE: 'Alfresco is starting',
     ALFRESCO_STARTING_MESSAGE:
       'Wait a few minutes till Alfresco is ready. You may use the Refresh button to update status.',

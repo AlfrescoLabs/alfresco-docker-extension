@@ -97,7 +97,7 @@ export const removeContainer = async (containerName: string) => {
     'network=alfresco',
   ]);
   if (result.stdout.length > 0) {
-    await ddClient.docker.cli.exec('container', ['rm', '-v', containerName]);
+    await ddClient.docker.cli.exec('container', ['rm', '-f', '-v', containerName]);
   }
 };
 export async function deployService(config: ServiceConfiguration) {
@@ -112,8 +112,10 @@ export async function deployService(config: ServiceConfiguration) {
   ]);
   if (running.stdout.length === 0) {
     await removeContainer(config.service);
+    ddClient.docker.cli.exec('container', ['rm', '-f', '-v', config.service]);
     await ddClient.docker.cli.exec('run', [
       '-d',
+      '--rm',
       '--name',
       config.service,
       '--network',
