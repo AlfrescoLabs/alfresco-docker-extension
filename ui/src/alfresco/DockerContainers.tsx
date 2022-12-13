@@ -55,7 +55,7 @@ export const DockerContainers = () => {
             </Alert>
           </Box>
         ))}
-      { dockerInfo.arch != 'none' && <DockerContainerCreate dockerInfo={dockerInfo}/> }
+      { dockerInfo.arch !== 'none' && <DockerContainerCreate dockerInfo={dockerInfo}/> }
     </Stack>
   );
 };
