@@ -76,7 +76,7 @@ const ConfigurationMap = {
     run: {
       options: [
         '--memory',
-        '1024m',
+        '1536m',
         '-e',
         'SOLR_ALFRESCO_HOST=alfresco',
         '-e',
