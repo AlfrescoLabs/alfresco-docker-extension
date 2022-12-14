@@ -4,7 +4,7 @@ import { DockerContainerCreate } from './DockerContainerCreate';
 import { getDockerInfo } from '../helper/cli';
 import { resources } from '../helper/resources';
 import { RAM_LIMIT } from './configuration';
-
+import { DockerInfo } from './types';
 const enoughRAM = (dockerInfo: DockerInfo) => dockerInfo.RAM >= RAM_LIMIT;
 
 const preconditions = [
@@ -17,12 +17,9 @@ const preconditions = [
         {resources.HOME.RAM_AVAILABLE_MESSAGE + info.RAM.toFixed(2)}
       </div>
     ),
-  }
+  },
 ];
-export type DockerInfo = {
-  RAM: number;
-  arch: 'none' | 'x86_64' | 'aarch64';
-};
+
 export const DockerContainers = () => {
   const [dockerInfo, setDockerInfo] = useState<DockerInfo>({
     RAM: RAM_LIMIT,
@@ -55,7 +52,9 @@ export const DockerContainers = () => {
             </Alert>
           </Box>
         ))}
-      { dockerInfo.arch !== 'none' && <DockerContainerCreate dockerInfo={dockerInfo}/> }
+      {dockerInfo.arch !== 'none' && (
+        <DockerContainerCreate dockerInfo={dockerInfo} />
+      )}
     </Stack>
   );
 };

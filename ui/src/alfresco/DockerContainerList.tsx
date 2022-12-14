@@ -21,9 +21,7 @@ import React from 'react';
 import { AlfrescoStates, ServiceStore, ContainerState } from './types';
 import {
   CloudDone,
-  CloudDownloadOutlined,
   CloudOff,
-  VerticalAlignCenter,
 } from '@mui/icons-material';
 
 const startAlfresco = async () => {
