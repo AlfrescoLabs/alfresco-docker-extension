@@ -2,6 +2,14 @@
 
 Experimental Docker Extension to deploy Alfresco Stack using the Docker Desktop interface
 
+The extension can be installed using following command (with Extensions enabled in Docker Desktop):
+
+```sh
+docker extension install angelborroy/alfresco-extension
+```
+
+Following instructions are only required to build and develop the extension.
+
 ## Prerequisites
 
 Runtime Requirements:
