@@ -63,3 +63,18 @@ Open two terminals:
 Now launching the extension on docker dashboard will open DevTools for logs and any change will be hot reloaded in the UI.
 
 > **Note** when a new build of the extension is needed don't run `docker extension install` again, otherwise the cli will reply with an error. run `docker extension update` instead.
+
+## Publishing the extension
+
+Before publishing the extension, create a git tag with the number of the release.
+
+```
+git tag 1.0.0
+```
+
+Once the tag is applied, run following commands to push the Docker Image to Docker Hub (using the tag name as TAG parameter for `make`)
+
+```
+make prepare-buildx
+make push-extension TAG=1.0.0
+```
