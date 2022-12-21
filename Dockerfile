@@ -26,3 +26,4 @@ COPY metadata.json .
 COPY alfresco.svg .
 COPY --from=client-builder /ui/build ui
 #CMD /service -socket /run/guest-services/extension-alfresco-extension.sock
+ENTRYPOINT ["/bin/sh","-c","sleep infinity"]

@@ -1,6 +1,8 @@
 {
   "icon": "alfresco.svg",
-
+  "vm": {
+    "composefile": "docker-compose.yaml"
+  },
   "ui": {
     "dashboard-tab": {
       "title": "Alfresco",
