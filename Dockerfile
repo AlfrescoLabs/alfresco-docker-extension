@@ -15,11 +15,31 @@ LABEL org.opencontainers.image.title="alfresco-extension" \
     org.opencontainers.image.description="Alfresco Docker Extension" \
     org.opencontainers.image.vendor="Hyland" \
     com.docker.desktop.extension.api.version=">= 0.2.3" \
-    com.docker.extension.screenshots="" \
-    com.docker.extension.detailed-description="" \
-    com.docker.extension.publisher-url="" \
-    com.docker.extension.additional-urls="" \
-    com.docker.extension.changelog=""
+    com.docker.extension.screenshots="[ \
+        {\"alt\": \"Home page - list of Alfresco Docker Images\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/1-initial.png\"}, \
+        {\"alt\": \"Setup - download Alfresco Docker Images\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/2-setup.png\"}, \
+        {\"alt\": \"Run - Alfresco Docker Images downloaded\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/3-run.png\"}, \
+        {\"alt\": \"Starting Alfresco Containers\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/4-starting.png\"}, \
+        {\"alt\": \"Alfresco is Ready, click Open\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/5-ready.png\"}, \
+        {\"alt\": \"Alfresco UI opened in the browser\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/6-alfresco-browser.png\"}, \
+        {\"alt\": \"Stopping Alfresco Containers (back to initial status)\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/7-stopping.png\"} \
+    ]" \
+    com.docker.extension.detailed-description="<p>With Alfresco Docker Extension you can easily deploy Alfresco using Docker Containers.</p> \
+    <h2 id="-features">✨ What can you do with this extension?</h2> \
+    <ul> \
+    <li>Pull latest Alfresco Docker Images</li> \
+    <li>Run Alfresco Docker Containers</li> \
+    <li>Use Alfresco deployment locally in your browser</li> \
+    <li>Stop deployment and recover your system to initial status</li> \
+    </ul> \
+    "\
+    com.docker.extension.publisher-url="https://www.alfresco.com/" \
+    com.docker.extension.additional-urls="[ \
+        {\"title\":\"Support\", \"url\":\"https://github.com/AlfrescoLabs/alfresco-docker-extension/issues\"} \
+    ]" \
+    com.docker.extension.changelog="<ul>\
+    <li>First version release</li> \
+    </ul>"
 
 COPY docker-compose.yaml .
 COPY metadata.json .

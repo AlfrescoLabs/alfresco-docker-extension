@@ -1,3 +1,4 @@
 node_modules
 .vscode
 ui/build
+.DS_Store
