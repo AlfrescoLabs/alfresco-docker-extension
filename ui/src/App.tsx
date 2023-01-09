@@ -18,8 +18,8 @@ export const App = () => {
             alignSelf: 'right',
             marginTop: '30px',
             marginBottom: '10px',
-            maxHeight: { xs: 100, md: 400 },
-            maxWidth: { xs: 100, md: 400 },
+            maxHeight: { xs: 400, md: 600 },
+            maxWidth: { xs: 400, md: 600 },
           }}
           src={isDarkTheme ? LogoDark : LogoLight}
         />
