@@ -1,11 +1,7 @@
 import {
-  Alert,
-  AlertTitle,
-  Box,
   Button,
   Chip,
   colors,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -14,19 +10,12 @@ import {
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import ErrorIcon from '@mui/icons-material/Error';
-import { viewContainer, openAlfrescoInBrowser } from '../helper/cli';
+import { viewContainer } from '../helper/cli';
 import { resources } from '../helper/resources';
 
 import React from 'react';
-import { AlfrescoStates, ServiceStore, ContainerState } from './types';
-import {
-  CloudDone,
-  CloudOff,
-} from '@mui/icons-material';
-
-const startAlfresco = async () => {
-  await openAlfrescoInBrowser();
-};
+import { ServiceStore, ContainerState } from './types';
+import { CloudDone, CloudOff } from '@mui/icons-material';
 
 const ContainerStatus = ({ containerState }) => {
   switch (containerState as ContainerState) {
@@ -151,26 +140,6 @@ export const DockerContainerList = ({
           ))}
         </TableBody>
       </Table>
-      {alfresco.alfrescoState === AlfrescoStates.UP_AND_RUNNING ? (
-        <Stack direction="row" spacing={2}>
-          <Box>
-            <Alert severity="success">
-              <AlertTitle>{resources.LIST.ALFRESCO_READY_TITLE}</AlertTitle>
-              {resources.LIST.ALFRESCO_READY_MESSAGE}
-            </Alert>
-          </Box>
-          <Button
-            variant="contained"
-            onClick={() => {
-              startAlfresco();
-            }}
-          >
-            {resources.LIST.START}
-          </Button>
-        </Stack>
-      ) : (
-        <br></br>
-      )}
     </React.Fragment>
   );
 };
