@@ -5,6 +5,7 @@ import {
   Button,
   CircularProgress,
   colors,
+  Link,
   Stack,
 } from '@mui/material';
 
@@ -96,18 +97,22 @@ const CommandPanel = ({ alfrescoState, commands }) => {
         >
           Stop
         </Button>
-        <Button
-          disabled={!isReady(alfrescoState)}
-          onClick={(e) => {
-            e.preventDefault();
-            openAlfrescoInBrowser();
-          }}
-          variant="contained"
-          color="success"
-          startIcon={<OpenInBrowser />}
-        >
-          Open in browser
-        </Button>
+        {isReady(alfrescoState) ? (
+          <Link
+            onClick={(e) => {
+              e.preventDefault();
+              openAlfrescoInBrowser();
+            }}
+            href="#"
+            variant="h3"
+            color={colors.green[500]}
+          >
+            Open in browser
+            <OpenInBrowser />
+          </Link>
+        ) : (
+          ''
+        )}
       </Stack>
     </React.Fragment>
   );
@@ -131,7 +136,7 @@ const FeedbackPanel = ({ alfrescoState }) => {
   }
   if (isReady(alfrescoState)) {
     message =
-      "Alfresco is Ready! Click the 'Open in browser' button and use the default credentials admin/admin";
+      "Alfresco is Ready! Click the 'Open in browser' link and use the default credentials admin/admin";
     actionInProgress = false;
   }
   return (
