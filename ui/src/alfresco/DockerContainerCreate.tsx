@@ -105,7 +105,7 @@ const CommandPanel = ({ alfrescoState, commands }) => {
             }}
             href="#"
             variant="h3"
-            color={colors.green[500]}
+            //color={colors.green[500]}
           >
             Open in browser
             <OpenInBrowser />
