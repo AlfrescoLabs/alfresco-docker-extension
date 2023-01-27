@@ -11,7 +11,7 @@ COPY ui /ui
 RUN npm run build
 
 FROM alpine:3.15
-LABEL org.opencontainers.image.title="Alfresco" \
+LABEL org.opencontainers.image.title="Alfresco Community" \
     org.opencontainers.image.description="Alfresco Docker Extension" \
     org.opencontainers.image.vendor="Hyland" \
     com.docker.desktop.extension.api.version=">= 0.2.3" \
