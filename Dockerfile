@@ -16,7 +16,7 @@ LABEL org.opencontainers.image.title="Alfresco Community" \
     org.opencontainers.image.vendor="Hyland" \
     com.docker.desktop.extension.api.version=">= 0.2.3" \
     com.docker.desktop.extension.icon="https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main/alfresco.svg" \
-    com.docker.extension.categories="cloud-deployment"
+    com.docker.extension.categories="cloud-deployment" \
     com.docker.extension.screenshots="[ \
         {\"alt\": \"Home page - list of Alfresco Docker Images\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/1-initial.png\"}, \
         {\"alt\": \"Setup - download Alfresco Docker Images\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/2-setup.png\"}, \
