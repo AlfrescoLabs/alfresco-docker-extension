@@ -7,6 +7,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Tooltip,
 } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import ErrorIcon from '@mui/icons-material/Error';
@@ -92,25 +93,28 @@ export const DockerContainerList = ({
           {alfresco.services.map((s) => (
             <TableRow
               key={s.image}
-              //sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
               <TableCell scope="row">
                 {s.imageState === 'NOT_AVAILABLE' ? (
-                  <CloudOff
-                    style={{
-                      verticalAlign: 'middle',
-                      marginRight: '16px',
-                      color: colors.amber[500],
-                    }}
-                  ></CloudOff>
+                  <Tooltip title="Docker Images not available, click 'Setup' button">
+                    <CloudOff
+                      style={{
+                        verticalAlign: 'middle',
+                        marginRight: '16px',
+                        color: colors.amber[500],
+                      }}
+                    ></CloudOff>
+                  </Tooltip>
                 ) : (
-                  <CloudDone
-                    style={{
-                      verticalAlign: 'middle',
-                      marginRight: '16px',
-                      color: colors.green[400],
-                    }}
-                  ></CloudDone>
+                  <Tooltip title="Docker Images locally available">
+                    <CloudDone
+                      style={{
+                        verticalAlign: 'middle',
+                        marginRight: '16px',
+                        color: colors.green[400],
+                      }}
+                    ></CloudDone>
+                  </Tooltip>
                 )}
                 <span>{s.image}</span>
               </TableCell>
@@ -121,19 +125,23 @@ export const DockerContainerList = ({
               </TableCell>
               <TableCell align="right">
                 {s.state === 'NO_CONTAINER' ? (
-                  <InfoIcon style={{ color: 'gray' }} />
+                  <Tooltip title="This option will be enabled when Container is running">
+                      <InfoIcon style={{ color: 'gray' }} />
+                  </Tooltip>
                 ) : (
-                  <Button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      viewContainer(s.id);
-                    }}
-                  >
-                    {s.state === 'EXITED' && (
-                      <ErrorIcon style={{ color: 'red' }} />
-                    )}
-                    {s.state !== 'EXITED' && <InfoIcon />}
-                  </Button>
+                  <Tooltip title="Details of the Container">
+                    <Button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        viewContainer(s.id);
+                      }}
+                    >
+                      {s.state === 'EXITED' && (
+                        <ErrorIcon style={{ color: 'red' }} />
+                      )}
+                      {s.state !== 'EXITED' && <InfoIcon />}
+                    </Button>
+                  </Tooltip>
                 )}
               </TableCell>
             </TableRow>
