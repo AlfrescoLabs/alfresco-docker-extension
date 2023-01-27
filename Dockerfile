@@ -11,10 +11,12 @@ COPY ui /ui
 RUN npm run build
 
 FROM alpine:3.15
-LABEL org.opencontainers.image.title="alfresco-extension" \
+LABEL org.opencontainers.image.title="Alfresco Community" \
     org.opencontainers.image.description="Alfresco Docker Extension" \
     org.opencontainers.image.vendor="Hyland" \
     com.docker.desktop.extension.api.version=">= 0.2.3" \
+    com.docker.desktop.extension.icon="https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main/alfresco.svg" \
+    com.docker.extension.categories="cloud-deployment"
     com.docker.extension.screenshots="[ \
         {\"alt\": \"Home page - list of Alfresco Docker Images\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/1-initial.png\"}, \
         {\"alt\": \"Setup - download Alfresco Docker Images\", \"url\": \"https://raw.githubusercontent.com/AlfrescoLabs/alfresco-docker-extension/main//docs/images/2-setup.png\"}, \
@@ -45,5 +47,4 @@ COPY docker-compose.yaml .
 COPY metadata.json .
 COPY alfresco.svg .
 COPY --from=client-builder /ui/build ui
-#CMD /service -socket /run/guest-services/extension-alfresco-extension.sock
 ENTRYPOINT ["/bin/sh","-c","sleep infinity"]
