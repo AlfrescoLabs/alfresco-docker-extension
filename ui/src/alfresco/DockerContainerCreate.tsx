@@ -5,6 +5,7 @@ import {
   Button,
   CircularProgress,
   colors,
+  Link,
   Stack,
 } from '@mui/material';
 
@@ -26,15 +27,21 @@ import {
   isLoading,
   isStopping,
   isError,
+  isReady,
   needSetup,
   isInstalling,
 } from './queryState';
-import { setup, runContainers, stopContainers } from '../helper/cli';
+import {
+  setup,
+  runContainers,
+  stopContainers,
+  openAlfrescoInBrowser,
+} from '../helper/cli';
 import {
   ALFRESCO_7_3_CONFIGURATION,
   ALFRESCO_7_3_CONFIGURATION_AARCH64,
 } from './configuration';
-import { CloudDownloadSharp } from '@mui/icons-material';
+import { CloudDownloadSharp, OpenInBrowser } from '@mui/icons-material';
 
 function commands(alfresco: ServiceStore, dispatch) {
   return {
@@ -90,6 +97,21 @@ const CommandPanel = ({ alfrescoState, commands }) => {
         >
           Stop
         </Button>
+        {isReady(alfrescoState) ? (
+          <Link
+            onClick={(e) => {
+              e.preventDefault();
+              openAlfrescoInBrowser();
+            }}
+            href="#"
+            variant="h3"
+          >
+            Open in browser
+            <OpenInBrowser />
+          </Link>
+        ) : (
+          ''
+        )}
       </Stack>
     </React.Fragment>
   );
@@ -111,27 +133,37 @@ const FeedbackPanel = ({ alfrescoState }) => {
     message = 'Stopping Alfresco containers...';
     actionInProgress = true;
   }
+  if (isReady(alfrescoState)) {
+    message =
+      "Alfresco is Ready! Click the 'Open in browser' link and use the default credentials admin/admin";
+    actionInProgress = false;
+  }
   return (
     <Box
       sx={{
-        paddingLeft: '30px',
         textAlign: 'justify',
+        fontSize: '1.1em',
       }}
     >
       {actionInProgress ? (
-        <CircularProgress
-          sx={{
-            verticalAlign: 'middle',
-            color: colors.blue[500],
+        <span
+          style={{
+            marginLeft: '1rem',
+            marginRight: '1rem',
           }}
-        />
+        >
+          <CircularProgress
+            sx={{
+              verticalAlign: 'middle',
+              color: colors.blue[500],
+            }}
+          />
+        </span>
       ) : (
         ''
       )}
       <span
         style={{
-          paddingLeft: '1rem',
-          marginLeft: '1rem',
           verticalAlign: 'middle',
           lineHeight: 'normal',
         }}
