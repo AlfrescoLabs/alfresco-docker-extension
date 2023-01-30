@@ -96,7 +96,7 @@ export const DockerContainerList = ({
             >
               <TableCell scope="row">
                 {s.imageState === 'NOT_AVAILABLE' ? (
-                  <Tooltip title="Docker Images not available, click 'Setup' button">
+                  <Tooltip title="Image not available, click 'Setup' button">
                     <CloudOff
                       style={{
                         verticalAlign: 'middle',
@@ -106,7 +106,7 @@ export const DockerContainerList = ({
                     ></CloudOff>
                   </Tooltip>
                 ) : (
-                  <Tooltip title="Docker Images locally available">
+                  <Tooltip title="Image available locally">
                     <CloudDone
                       style={{
                         verticalAlign: 'middle',
@@ -125,12 +125,13 @@ export const DockerContainerList = ({
               </TableCell>
               <TableCell align="right">
                 {s.state === 'NO_CONTAINER' ? (
-                  <Tooltip title="This option will be enabled when Container is running">
+                  <Tooltip title="This option will be enabled when the Container is running">
                       <InfoIcon style={{ color: 'gray' }} />
                   </Tooltip>
                 ) : (
-                  <Tooltip title="Details of the Container">
+                  <Tooltip title="View container details">
                     <Button
+                      variant="text"
                       onClick={(e) => {
                         e.preventDefault();
                         viewContainer(s.id);
