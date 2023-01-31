@@ -4,10 +4,25 @@ import LogoDark from './images/alfresco-white-horizontal.png';
 import LogoLight from './images/alfresco-black-horizontal.png';
 import { Box, Stack } from '@mui/material';
 import { DockerContainers } from './alfresco/DockerContainers';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 export const App = () => {
-  const isDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const [mode, setMode] = useState('light')
+  const onSelectMode = (mode) => {
+    setMode(mode)
+    if (mode === 'dark')
+      document.body.classList.add('dark-mode')
+    else
+      document.body.classList.remove('dark-mode')
+  }  
+  useEffect(() => {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => onSelectMode(e.matches ? 'dark' : 'light'));
+    onSelectMode(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    return () => {
+      window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', () => {
+      });
+    }
+  }, []);
   return (
     <DockerMuiThemeProvider>
       <CssBaseline />
@@ -21,7 +36,7 @@ export const App = () => {
             maxHeight: { xs: 400, md: 600 },
             maxWidth: { xs: 400, md: 600 },
           }}
-          src={isDarkTheme ? LogoDark : LogoLight}
+          src={mode === 'dark' ? LogoDark : LogoLight}
         />
       </Stack>
       <DockerContainers />
