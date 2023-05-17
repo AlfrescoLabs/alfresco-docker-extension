@@ -38,8 +38,8 @@ import {
   openAlfrescoInBrowser,
 } from '../helper/cli';
 import {
-  ALFRESCO_7_3_CONFIGURATION,
-  ALFRESCO_7_3_CONFIGURATION_AARCH64,
+  ALFRESCO_7_4_CONFIGURATION,
+  ALFRESCO_7_4_CONFIGURATION_AARCH64,
 } from './configuration';
 import { CloudDownloadSharp, OpenInBrowser } from '@mui/icons-material';
 
@@ -177,8 +177,8 @@ const FeedbackPanel = ({ alfrescoState }) => {
 export const DockerContainerCreate = ({ dockerInfo }) => {
   const [configuration] = useState(
     dockerInfo.arch === 'aarch64'
-      ? ALFRESCO_7_3_CONFIGURATION_AARCH64
-      : ALFRESCO_7_3_CONFIGURATION
+      ? ALFRESCO_7_4_CONFIGURATION_AARCH64
+      : ALFRESCO_7_4_CONFIGURATION
   );
   const [alfresco, dispatch] = useReducer<Reducer<ServiceStore, Action>>(
     serviceReducer,

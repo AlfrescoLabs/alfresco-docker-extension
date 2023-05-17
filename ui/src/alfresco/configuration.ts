@@ -172,6 +172,25 @@ export const ALFRESCO_7_3_CONFIGURATION: ServiceConfiguration[] =
     },
     { name: 'postgres', image: 'postgres:14.4' },
   ]);
+export const ALFRESCO_7_4_CONFIGURATION: ServiceConfiguration[] =
+  createConfigurationFor([
+    {
+      name: 'alfresco',
+      image: 'alfresco/alfresco-content-repository-community:7.4.0.1',
+    },
+    {
+      name: 'activemq',
+      image: 'alfresco/alfresco-activemq:5.17.1-jre11-rockylinux8',
+    },
+    { name: 'proxy', image: 'alfresco/alfresco-acs-nginx:3.4.2' },
+    { name: 'content-app', image: 'alfresco/alfresco-content-app:4.0.0' },
+    { name: 'solr6', image: 'alfresco/alfresco-search-services:2.0.7' },
+    {
+      name: 'transform-core-aio',
+      image: 'alfresco/alfresco-transform-core-aio:3.1.0',
+    },
+    { name: 'postgres', image: 'postgres:14.4' },
+  ]);
 export const ALFRESCO_7_3_CONFIGURATION_AARCH64: ServiceConfiguration[] =
   createConfigurationFor([
     {
@@ -188,6 +207,25 @@ export const ALFRESCO_7_3_CONFIGURATION_AARCH64: ServiceConfiguration[] =
     {
       name: 'transform-core-aio',
       image: 'angelborroy/alfresco-transform-core-aio:3.0.0',
+    },
+    { name: 'postgres', image: 'postgres:14.4' },
+  ]);
+export const ALFRESCO_7_4_CONFIGURATION_AARCH64: ServiceConfiguration[] =
+  createConfigurationFor([
+    {
+      name: 'alfresco',
+      image: 'alfresco/alfresco-content-repository-community:7.4.0.1',
+    },
+    {
+      name: 'activemq',
+      image: 'alfresco/alfresco-activemq:5.17.1-jre11-rockylinux8',
+    },
+    { name: 'proxy', image: 'angelborroy/alfresco-acs-nginx:3.4.2' },
+    { name: 'content-app', image: 'angelborroy/alfresco-content-app:4.0.0' },
+    { name: 'solr6', image: 'angelborroy/alfresco-search-services:2.0.7' },
+    {
+      name: 'transform-core-aio',
+      image: 'angelborroy/alfresco-transform-core-aio:3.1.0',
     },
     { name: 'postgres', image: 'postgres:14.4' },
   ]);  
