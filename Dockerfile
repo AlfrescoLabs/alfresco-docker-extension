@@ -1,4 +1,4 @@
-FROM node:18.9-alpine3.15 AS client-builder
+FROM node:18.12-alpine3.16 AS client-builder
 WORKDIR /ui
 # cache packages in layer
 COPY ui/package.json /ui/package.json
@@ -10,7 +10,7 @@ RUN --mount=type=cache,target=/usr/src/app/.npm \
 COPY ui /ui
 RUN npm run build
 
-FROM alpine:3.15
+FROM alpine
 LABEL org.opencontainers.image.title="Alfresco Community" \
     org.opencontainers.image.description="Alfresco Docker Extension" \
     org.opencontainers.image.vendor="Hyland" \
@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.title="Alfresco Community" \
         {\"title\":\"Support\", \"url\":\"https://github.com/AlfrescoLabs/alfresco-docker-extension/issues\"} \
     ]" \
     com.docker.extension.changelog="<ul>\
-    <li>Support for Alfresco 7.4</li> \
+    <li>Fix alpine HIGH vulnerability</li> \
     </ul>"
 
 COPY docker-compose.yaml .
