@@ -1,4 +1,4 @@
-FROM node:18.12-alpine3.16 AS client-builder
+FROM node:18.18-alpine3.18 AS client-builder
 WORKDIR /ui
 # cache packages in layer
 COPY ui/package.json /ui/package.json
@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.title="Alfresco Community" \
         {\"title\":\"Support\", \"url\":\"https://github.com/AlfrescoLabs/alfresco-docker-extension/issues\"} \
     ]" \
     com.docker.extension.changelog="<ul>\
-    <li>Fix alpine HIGH vulnerability</li> \
+    <li>Support for Alfresco 23.1 release</li> \
     </ul>"
 
 COPY docker-compose.yaml .
