@@ -38,7 +38,7 @@ import {
   openAlfrescoInBrowser,
 } from '../helper/cli';
 import {
-  ALFRESCO_23_1_CONFIGURATION,
+  ALFRESCO_23_2_CONFIGURATION,
 } from './configuration';
 import { CloudDownloadSharp, OpenInBrowser } from '@mui/icons-material';
 
@@ -175,7 +175,7 @@ const FeedbackPanel = ({ alfrescoState }) => {
 
 export const DockerContainerCreate = ({ dockerInfo }) => {
   const [configuration] = useState(
-    ALFRESCO_23_1_CONFIGURATION
+    ALFRESCO_23_2_CONFIGURATION
   );
   const [alfresco, dispatch] = useReducer<Reducer<ServiceStore, Action>>(
     serviceReducer,
