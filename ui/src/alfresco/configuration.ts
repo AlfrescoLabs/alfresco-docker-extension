@@ -221,7 +221,7 @@ export const ALFRESCO_23_1_CONFIGURATION: ServiceConfiguration[] =
       image: 'alfresco/alfresco-activemq:5.18-jre17-rockylinux8',
     },
     { name: 'proxy', image: 'alfresco/alfresco-acs-nginx:3.4.2' },
-    { name: 'content-app', image: 'alfresco/alfresco-content-app:4.3.0' },
+    { name: 'content-app', image: 'alfresco/alfresco-content-app:4.4.0' },
     { name: 'solr6', image: 'alfresco/alfresco-search-services:2.0.9.1' },
     {
       name: 'transform-core-aio',
