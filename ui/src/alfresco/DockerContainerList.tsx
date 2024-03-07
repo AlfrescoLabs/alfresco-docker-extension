@@ -116,7 +116,7 @@ export const DockerContainerList = ({
                     ></CloudDone>
                   </Tooltip>
                 )}
-                <span>{s.image}</span>
+                <span>{s.imageName}</span>
               </TableCell>
               <TableCell>{s.version}</TableCell>
               <TableCell>{s.name}</TableCell>
