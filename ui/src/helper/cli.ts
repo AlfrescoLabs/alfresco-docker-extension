@@ -173,7 +173,11 @@ export const waitTillReadyDb = async () => {
 };
 
 export const viewContainer = async (id: string) => {
-  await ddClient.desktopUI.navigate.viewContainer(id);
+  try {
+    await ddClient.desktopUI.navigate.viewContainer(id);
+  } catch (err) {
+    ddClient.desktopUI.toast.warning("This action is only enabled when 'Show Docker Extensions system containers' option is checked");
+  }
 };
 
 export const openAlfrescoInBrowser = async () => {
