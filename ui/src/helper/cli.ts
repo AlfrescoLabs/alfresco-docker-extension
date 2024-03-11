@@ -19,20 +19,40 @@ export const getDockerInfo = async () => {
 
 export async function listAllContainers(
   configuration: ServiceConfiguration[],
-  network: string = 'alfresco'
 ): Promise<any[]> {
-  const containerList = (await ddClient.docker.listContainers({
-    all: true,
-    filters: JSON.stringify({
-      name: configuration.map((s) => s.service),
-      network: [network],
-    }),
-  })) as any[];
-  return containerList;
+  let containers = [];
+  await Promise.all(configuration.map(async(s) => {
+    let inspectResult;
+    try {
+      inspectResult = await ddClient.docker.cli.exec("inspect", [
+        "--type",
+        "container",
+        s.service,
+      ]);
+    } catch (error) {
+      console.info(
+        "Error from inspect, probably didn't find container " + s.service + ", which happens when it has not yet started. This is likely not an issue.",
+        error
+      );    
+    }
+    if (inspectResult) {
+      const inspectJson: Array<any> = JSON.parse(inspectResult.stdout);
+      const containerInfo = inspectJson[0];
+      let container = {
+        Id: containerInfo.Id,
+        Image: containerInfo.Image,
+        Names: [containerInfo.Name],
+        State: containerInfo.State?.Status,
+        Status: containerInfo.State,
+      }
+      containers.push(container);
+    }
+  }));
+  return containers;
 }
+
 export async function listAllImages(
   configuration: ServiceConfiguration[],
-  network: string = 'alfresco'
 ): Promise<any[]> {
   const containerList = (await ddClient.docker.listImages({
     filters: JSON.stringify({
@@ -153,7 +173,11 @@ export const waitTillReadyDb = async () => {
 };
 
 export const viewContainer = async (id: string) => {
-  await ddClient.desktopUI.navigate.viewContainer(id);
+  try {
+    await ddClient.desktopUI.navigate.viewContainer(id);
+  } catch (err) {
+    ddClient.desktopUI.toast.warning("This action is only enabled when 'Show Docker Extensions system containers' option is checked");
+  }
 };
 
 export const openAlfrescoInBrowser = async () => {
