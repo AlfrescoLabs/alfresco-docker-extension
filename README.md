@@ -25,6 +25,8 @@ Development Recommendations:
 
 In Docker Desktop, go to `Preferences > Extensions` and check `Enable Docker Extensions` and `Show Docker Extensions system containers` options
 
+>> It's not required to enable the option `Show Docker Extensions system containers`. But without it, navigation to Container Detail (the (i) icon to the left of every container) is not available.
+
 ## Running the extension
 
 Since this Docker Extensions hasn't been yet published, it's required to build and deploy it locally from source code.

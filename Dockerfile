@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.title="Alfresco Community" \
         {\"title\":\"Support\", \"url\":\"https://github.com/AlfrescoLabs/alfresco-docker-extension/issues\"} \
     ]" \
     com.docker.extension.changelog="<ul>\
-    <li>Support for Alfresco 23.2 release</li> \
+    <li>Allowing to run the extension without 'Show Docker Extensions system containers' option checked.</li> \
     </ul>"
 
 COPY docker-compose.yaml .
