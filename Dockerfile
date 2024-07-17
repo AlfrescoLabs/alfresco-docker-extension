@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.title="Alfresco Community" \
         {\"title\":\"Support\", \"url\":\"https://github.com/AlfrescoLabs/alfresco-docker-extension/issues\"} \
     ]" \
     com.docker.extension.changelog="<ul>\
-    <li>Latest 23.2 releases for UI and Transform.</li> \
+    <li>Add SBOM and provenance to Docker Image.</li> \
     </ul>"
 
 COPY docker-compose.yaml .
