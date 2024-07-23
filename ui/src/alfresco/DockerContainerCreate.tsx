@@ -45,7 +45,7 @@ import { CloudDownloadSharp, OpenInBrowser } from '@mui/icons-material';
 function commands(alfresco: ServiceStore, dispatch) {
   return {
     run: () => {
-      runContainers(alfresco.configuration);
+      runContainers(alfresco.exposePorts, alfresco.configuration);
       dispatch({ type: 'START_ALFRESCO' });
     },
     stop: () => {
@@ -173,6 +173,29 @@ const FeedbackPanel = ({ alfrescoState }) => {
   );
 };
 
+const PortsPanel = ({ alfresco, alfrescoState }) => {
+  const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
+
+  const handleToggleCheckbox = () => {
+    setIsCheckboxChecked(!isCheckboxChecked);
+    alfresco.exposePorts=!isCheckboxChecked;
+  };
+
+  return (
+    <React.Fragment>
+      <Stack direction="row" alignItems="center" spacing={2}>
+        <input
+          type="checkbox"
+          checked={isCheckboxChecked}
+          onClick={handleToggleCheckbox}
+          disabled={canStop(alfrescoState)}
+        />
+        <label>Expose container ports to your host</label>
+      </Stack>
+    </React.Fragment>
+  );
+}
+
 export const DockerContainerCreate = ({ dockerInfo }) => {
   const [configuration] = useState(
     ALFRESCO_23_2_CONFIGURATION
@@ -181,7 +204,6 @@ export const DockerContainerCreate = ({ dockerInfo }) => {
     serviceReducer,
     defaultAlfrescoState(configuration)
   );
-
   const refreshContainers = async () => {
     let result = await getAlfrescoServices(configuration);
     dispatch({ type: 'REFRESH_SERVICE_STATE', payload: result });
@@ -234,6 +256,7 @@ export const DockerContainerCreate = ({ dockerInfo }) => {
         commands={commands(alfresco, dispatch)}
       />
       <FeedbackPanel alfrescoState={alfresco.alfrescoState} />
+      <PortsPanel alfresco={alfresco} alfrescoState={alfresco.alfrescoState} />
       <DockerContainerList alfresco={alfresco} />
     </React.Fragment>
   );

@@ -16,6 +16,7 @@ export const resources = {
     VERSION: 'VERSION',
     NAME: 'NAME',
     STATUS: 'STATUS',
+    PORT: 'PORT',
     DETAILS: 'ACTIONS',
     START: 'OPEN',
     ALFRESCO_READY_TITLE: 'Alfresco is Ready!',

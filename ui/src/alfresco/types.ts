@@ -10,7 +10,8 @@ export type ServiceName =
 export type ServiceConfiguration = {
   service: ServiceName;
   image: string;
-  run: { options: string[]; cmd: string; order: number };
+  port: string;
+  run: { options: string[]; cmd: string; ports: string, order: number };
 };
 export type ImageState =
   | 'NOT_AVAILABLE'
@@ -21,6 +22,7 @@ export type ImageState =
 export type ImageInfo = {
   name: string;
   state: ImageState;
+  port: string;
 };
 export interface Service {
   id: string;
@@ -29,6 +31,7 @@ export interface Service {
   status: string;
   image: string;
   imageName: string;
+  port: string;
   imageState: ImageState;
   version: string;
 }
@@ -61,6 +64,7 @@ export interface ServiceStore {
   configuration: ServiceConfiguration[];
   services: Service[];
   errors: string[];
+  exposePorts: boolean;
 }
 export type Action = {
   type: string;

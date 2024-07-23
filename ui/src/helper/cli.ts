@@ -17,6 +17,31 @@ export const getDockerInfo = async () => {
   }
 };
 
+const getHostPorts = (data: any[]): string => {
+  const hostPorts: string[] = [];
+
+  try {
+    data.forEach(container => {
+        const ports = container.NetworkSettings?.Ports;
+        if (ports) {
+            for (const port in ports) {
+                if (ports[port] && Array.isArray(ports[port])) {
+                    ports[port].forEach((portDetail: { HostPort?: string }) => {
+                        if (portDetail && portDetail.HostPort) {
+                            hostPorts.push(portDetail.HostPort);
+                        }
+                    });
+                }
+            }
+        }
+    });
+  } catch (e) {
+    return e.Message;
+  }
+
+  return hostPorts.join(',');
+};
+
 export async function listAllContainers(
   configuration: ServiceConfiguration[],
 ): Promise<any[]> {
@@ -44,6 +69,7 @@ export async function listAllContainers(
         Names: [containerInfo.Name],
         State: containerInfo.State?.Status,
         Status: containerInfo.State,
+        Port: getHostPorts(inspectJson),
       }
       containers.push(container);
     }
@@ -80,11 +106,12 @@ function groupByRunOrder(
     }, {})
   );
 }
-export async function runContainers(services: ServiceConfiguration[]) {
+
+export async function runContainers(exposePorts: boolean, services: ServiceConfiguration[]) {
   await createNetwork('alfresco');
   const runGroups = groupByRunOrder(services);
-  runGroups.forEach(async (s) => {
-    await Promise.all(s.map(deployService));
+  runGroups.forEach(async (group) => {
+    await Promise.all(group.map(service => deployService(exposePorts, service)));
   });
 }
 
@@ -120,7 +147,7 @@ export const removeContainer = async (containerName: string) => {
     await ddClient.docker.cli.exec('container', ['rm', '-f', '-v', containerName]);
   }
 };
-export async function deployService(config: ServiceConfiguration) {
+export async function deployService(exposePorts: boolean, config: ServiceConfiguration) {
   const running = await ddClient.docker.cli.exec('ps', [
     '-f',
     'status=running',
@@ -141,6 +168,7 @@ export async function deployService(config: ServiceConfiguration) {
       '--network',
       'alfresco',
       ...config.run.options,
+      (exposePorts ? config.run.ports : ''),
       config.image,
       config.run.cmd,
     ]);

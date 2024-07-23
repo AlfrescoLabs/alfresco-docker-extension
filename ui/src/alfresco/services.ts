@@ -15,6 +15,7 @@ function emptyServiceDescFor(name: string, image: string): Service {
   return {
     id: '',
     name: name,
+    port: '',
     state: 'NO_CONTAINER',
     status: '',
     image: image,
@@ -32,6 +33,7 @@ export function defaultAlfrescoState(
     configuration,
     services: configuration.map((c) => emptyServiceDescFor(c.service, c.image)),
     errors: [],
+    exposePorts: false,
   };
 }
 
@@ -45,6 +47,7 @@ function updateContainers(data: Service[], state: ServiceStore): ServiceStore {
         contState = container.state;
         curr.state = container.state;
         curr.status = container.status;
+        curr.port = container.port;
         break;
       }
     }
@@ -75,6 +78,7 @@ function updateAlfrescoAppState(store: ServiceStore) {
   if (store.alfrescoState === AlfrescoStates.STOPPING) {
     if (store.services.every((c) => c.state === 'NO_CONTAINER')) {
       store.alfrescoState = AlfrescoStates.INSTALLED;
+      store.services.map((service) => service.port = '');
       return store;
     }
   }
@@ -141,6 +145,7 @@ function dockerAPIToContainerDesc(dockerAPIContainer): Service {
   const [imageName, imageTag] = dockerAPIContainer.Image.split(':');
   return {
     name: dockerAPIContainer.Names[0].substring(1),
+    port: dockerAPIContainer.Port,
     state: dockerAPIContainer.State.toUpperCase(),
     status: dockerAPIContainer.Status,
     image: dockerAPIContainer.Image,
@@ -176,7 +181,7 @@ export async function getAlfrescoImages(
   try {
     const imageList = await listAllImages(serviceConf);
     const images: ImageInfo[] = imageList.map((i) => {
-      return { name: i.RepoTags[0], state: 'DOWNLOADED' };
+      return { name: i.RepoTags[0], state: 'DOWNLOADED', port: '' };
     });
     return images;
   } catch (err) {

@@ -82,6 +82,9 @@ export const DockerContainerList = ({
               <b>{resources.LIST.NAME}</b>
             </TableCell>
             <TableCell align="center">
+              <b>{resources.LIST.PORT}</b>
+            </TableCell>            
+            <TableCell align="center">
               <b>{resources.LIST.STATUS}</b>
             </TableCell>
             <TableCell align="center">
@@ -120,6 +123,7 @@ export const DockerContainerList = ({
               </TableCell>
               <TableCell>{s.version}</TableCell>
               <TableCell>{s.name}</TableCell>
+              <TableCell align="center">{s.port}</TableCell>
               <TableCell align="center">
                 <ContainerStatus containerState={s.state} />
               </TableCell>
