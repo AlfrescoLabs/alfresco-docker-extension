@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.title="Alfresco Community" \
         {\"title\":\"Support\", \"url\":\"https://github.com/AlfrescoLabs/alfresco-docker-extension/issues\"} \
     ]" \
     com.docker.extension.changelog="<ul>\
-    <li>Add SBOM and provenance to Docker Image.</li> \
+    <li>Option to expose container ports to host</li> \
     </ul>"
 
 COPY docker-compose.yaml .
