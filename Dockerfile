@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.title="Alfresco Community" \
         {\"title\":\"Support\", \"url\":\"https://github.com/AlfrescoLabs/alfresco-docker-extension/issues\"} \
     ]" \
     com.docker.extension.changelog="<ul>\
-    <li>Option to expose container ports to host</li> \
+    <li>Support for Alfresco 23.4 release</li> \
     </ul>"
 
 COPY docker-compose.yaml .

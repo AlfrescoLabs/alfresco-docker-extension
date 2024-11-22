@@ -213,7 +213,7 @@ export const ALFRESCO_23_1_CONFIGURATION: ServiceConfiguration[] =
     },
     { name: 'postgres', image: 'postgres:14.4' },
   ]);
-  export const ALFRESCO_23_2_CONFIGURATION: ServiceConfiguration[] =
+export const ALFRESCO_23_2_CONFIGURATION: ServiceConfiguration[] =
   createConfigurationFor([
     {
       name: 'alfresco',
@@ -232,6 +232,25 @@ export const ALFRESCO_23_1_CONFIGURATION: ServiceConfiguration[] =
     },
     { name: 'postgres', image: 'postgres:15.6' },
   ]);    
+export const ALFRESCO_23_4_CONFIGURATION: ServiceConfiguration[] =
+  createConfigurationFor([
+    {
+      name: 'alfresco',
+      image: 'alfresco/alfresco-content-repository-community:23.4.0',
+    },
+    {
+      name: 'activemq',
+      image: 'alfresco/alfresco-activemq:5.18-jre17-rockylinux8',
+    },
+    { name: 'proxy', image: 'alfresco/alfresco-acs-nginx:3.4.2' },
+    { name: 'content-app', image: 'alfresco/alfresco-content-app:5.2.0' },
+    { name: 'solr6', image: 'alfresco/alfresco-search-services:2.0.13' },
+    {
+      name: 'transform-core-aio',
+      image: 'alfresco/alfresco-transform-core-aio:5.1.5',
+    },
+    { name: 'postgres', image: 'postgres:15.6' },
+  ]);
 export const ALFRESCO_7_3_CONFIGURATION_AARCH64: ServiceConfiguration[] =
   createConfigurationFor([
     {
