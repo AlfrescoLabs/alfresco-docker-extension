@@ -236,7 +236,7 @@ export const ALFRESCO_23_4_CONFIGURATION: ServiceConfiguration[] =
   createConfigurationFor([
     {
       name: 'alfresco',
-      image: 'alfresco/alfresco-content-repository-community:23.4.0',
+      image: 'alfresco/alfresco-content-repository-community:23.4.1',
     },
     {
       name: 'activemq',
