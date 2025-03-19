@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.title="Alfresco Community" \
         {\"title\":\"Support\", \"url\":\"https://github.com/AlfrescoLabs/alfresco-docker-extension/issues\"} \
     ]" \
     com.docker.extension.changelog="<ul>\
-    <li>Alfresco 23.4 release patched (23.4.1)</li> \
+    <li>Support for Alfresco 25.1</li> \
     </ul>"
 
 COPY docker-compose.yaml .
