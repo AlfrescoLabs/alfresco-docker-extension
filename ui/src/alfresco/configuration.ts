@@ -1,14 +1,43 @@
 import { ServiceConfiguration } from './types';
 
 export const RAM_LIMIT = 10;
+const DEFAULT_ACTIVEMQ_USER = 'admin';
+const DEFAULT_ACTIVEMQ_PASSWORD = 'admin';
 
 type option = {
   name: string;
   image: string;
 };
+type configurationFactoryMap = Record<string, (image: string) => any>;
 
-function createConfigurationFor(components: option[]): ServiceConfiguration[] {
-  return components.map(({ name, image }) => ConfigurationMap[name](image));
+function alfrescoJavaOpts(useActiveMqCredentials = false): string {
+  const brokerCredentials = useActiveMqCredentials
+    ? ` -Dmessaging.broker.username=${DEFAULT_ACTIVEMQ_USER} -Dmessaging.broker.password=${DEFAULT_ACTIVEMQ_PASSWORD}`
+    : '';
+
+  return `JAVA_OPTS="-Ddb.driver=org.postgresql.Driver -Ddb.username=alfresco -Ddb.password=alfresco -Ddb.url=jdbc:postgresql://postgres:5432/alfresco -Dsolr.host=solr6 -Dsolr.port=8983 -Dsolr.http.connection.timeout=1000 -Dsolr.secureComms=secret -Dsolr.sharedSecret=secret -Dsolr.base.url=/solr -Dindex.subsystem.name=solr6 -Dshare.host=127.0.0.1 -Dshare.port=8080 -Dalfresco.host=localhost -Dalfresco.port=8080 -Daos.baseUrlOverwrite=http://localhost:8080/alfresco/aos -Dmessaging.broker.url='failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true'${brokerCredentials} -Ddeployment.method=DOCKER_COMPOSE -DlocalTransform.core-aio.url=http://transform-core-aio:8090/ -Dhttpclient.config.transform.connectionRequestTimeout=500000 -Dcsrf.filter.enabled=false -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"`;
+}
+
+function activeMqRunOptions(useCredentials = false): string[] {
+  const options = ['--memory', '768m'];
+
+  if (useCredentials) {
+    options.push(
+      '-e',
+      `ACTIVEMQ_ADMIN_LOGIN=${DEFAULT_ACTIVEMQ_USER}`,
+      '-e',
+      `ACTIVEMQ_ADMIN_PASSWORD=${DEFAULT_ACTIVEMQ_PASSWORD}`
+    );
+  }
+
+  return options;
+}
+
+function createConfigurationFor(
+  components: option[],
+  configurationMap: configurationFactoryMap = ConfigurationMap
+): ServiceConfiguration[] {
+  return components.map(({ name, image }) => configurationMap[name](image));
 }
 const ConfigurationMap = {
   alfresco: (image: string) => ({
@@ -21,7 +50,7 @@ const ConfigurationMap = {
         '-e',
         'JAVA_TOOL_OPTIONS="-Dencryption.keystore.type=JCEKS -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding -Dencryption.keyAlgorithm=DESede -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore -Dmetadata-keystore.password=mp6yc0UD9e -Dmetadata-keystore.aliases=metadata -Dmetadata-keystore.metadata.password=oKIWzVdEdA -Dmetadata-keystore.metadata.algorithm=DESede"',
         '-e',
-        'JAVA_OPTS="-Ddb.driver=org.postgresql.Driver -Ddb.username=alfresco -Ddb.password=alfresco -Ddb.url=jdbc:postgresql://postgres:5432/alfresco -Dsolr.host=solr6 -Dsolr.port=8983 -Dsolr.http.connection.timeout=1000 -Dsolr.secureComms=secret -Dsolr.sharedSecret=secret -Dsolr.base.url=/solr -Dindex.subsystem.name=solr6 -Dshare.host=127.0.0.1 -Dshare.port=8080 -Dalfresco.host=localhost -Dalfresco.port=8080 -Daos.baseUrlOverwrite=http://localhost:8080/alfresco/aos -Dmessaging.broker.url=\'failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true\' -Ddeployment.method=DOCKER_COMPOSE -DlocalTransform.core-aio.url=http://transform-core-aio:8090/ -Dhttpclient.config.transform.connectionRequestTimeout=500000 -Dcsrf.filter.enabled=false -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"',
+        alfrescoJavaOpts(),
       ],
       cmd: '',
       ports: '',
@@ -51,7 +80,7 @@ const ConfigurationMap = {
     service: 'activemq',
     image,
     run: {
-      options: ['--memory', '768m'],
+      options: activeMqRunOptions(),
       cmd: '',
       ports: '-p 61616:61616 -p 8161:8161',
       order: 0,
@@ -134,6 +163,30 @@ const ConfigurationMap = {
       cmd: '',
       ports: '',
       order: 1,
+    },
+  }),
+};
+const ConfigurationMap26_1 = {
+  ...ConfigurationMap,
+  alfresco: (image: string) => ({
+    ...ConfigurationMap.alfresco(image),
+    run: {
+      ...ConfigurationMap.alfresco(image).run,
+      options: [
+        '--memory',
+        '3328m',
+        '-e',
+        'JAVA_TOOL_OPTIONS="-Dencryption.keystore.type=JCEKS -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding -Dencryption.keyAlgorithm=DESede -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore -Dmetadata-keystore.password=mp6yc0UD9e -Dmetadata-keystore.aliases=metadata -Dmetadata-keystore.metadata.password=oKIWzVdEdA -Dmetadata-keystore.metadata.algorithm=DESede"',
+        '-e',
+        alfrescoJavaOpts(true),
+      ],
+    },
+  }),
+  activemq: (image: string) => ({
+    ...ConfigurationMap.activemq(image),
+    run: {
+      ...ConfigurationMap.activemq(image).run,
+      options: activeMqRunOptions(true),
     },
   }),
 };
@@ -316,7 +369,7 @@ export const ALFRESCO_23_4_CONFIGURATION: ServiceConfiguration[] =
     },
     {
       name: 'activemq',
-      image: 'alfresco/alfresco-activemq:5.18-jre17-rockylinux8',
+      image: 'alfresco/alfresco-activemq:6.2.1-jre17-rockylinux8',
     },
     { name: 'proxy', image: 'alfresco/alfresco-acs-nginx:3.4.2' },
     { name: 'content-app', image: 'alfresco/alfresco-content-app:7.3.0' },
@@ -326,7 +379,7 @@ export const ALFRESCO_23_4_CONFIGURATION: ServiceConfiguration[] =
       image: 'alfresco/alfresco-transform-core-aio:5.4.0',
     },
     { name: 'postgres', image: 'postgres:15.6' },
-  ]);
+  ], ConfigurationMap26_1);
 export const ALFRESCO_7_3_CONFIGURATION_AARCH64: ServiceConfiguration[] =
   createConfigurationFor([
     {
