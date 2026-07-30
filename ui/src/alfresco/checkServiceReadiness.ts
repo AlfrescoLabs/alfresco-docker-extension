@@ -35,6 +35,18 @@ const readyCheckPolicies = Object.freeze({
       'bash -c "curl -s -L -o /dev/null --max-time 1 -w "%{http_code}" --header "X-Alfresco-Search-Secret:secret" http://localhost:8983/solr"'
     )
   ),
+  opensearch: isReturning200(
+    readyCheckFn(
+      'opensearch',
+      'bash -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:9200/_cluster/health"'
+    )
+  ),
+  'batch-indexer': isReturning200(
+    readyCheckFn(
+      'batch-indexer',
+      'bash -c "curl -s -o /dev/null --max-time 1 -w "%{http_code}" http://localhost:8080/actuator/health"'
+    )
+  ),
   activemq: isReturning200(
     readyCheckFn(
       'activemq',

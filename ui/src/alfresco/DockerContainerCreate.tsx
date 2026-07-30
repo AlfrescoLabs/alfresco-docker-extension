@@ -38,7 +38,7 @@ import {
   openAlfrescoInBrowser,
 } from '../helper/cli';
 import {
-  ALFRESCO_26_1_CONFIGURATION,
+  ALFRESCO_26_2_CONFIGURATION,
 } from './configuration';
 import { CloudDownloadSharp, OpenInBrowser } from '@mui/icons-material';
 
@@ -198,7 +198,7 @@ const PortsPanel = ({ alfresco, alfrescoState }) => {
 
 export const DockerContainerCreate = ({ dockerInfo }) => {
   const [configuration] = useState(
-    ALFRESCO_26_1_CONFIGURATION
+    ALFRESCO_26_2_CONFIGURATION
   );
   const [alfresco, dispatch] = useReducer<Reducer<ServiceStore, Action>>(
     serviceReducer,
