@@ -1,6 +1,8 @@
 export type ServiceName =
   | 'activemq'
   | 'solr6'
+  | 'opensearch'
+  | 'batch-indexer'
   | 'transform-core-aio'
   | 'postgres'
   | 'alfresco'

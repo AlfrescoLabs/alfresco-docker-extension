@@ -1,8 +1,11 @@
 import { ServiceConfiguration } from './types';
 
-export const RAM_LIMIT = 10;
+export const RAM_LIMIT = 12;
 const DEFAULT_ACTIVEMQ_USER = 'admin';
 const DEFAULT_ACTIVEMQ_PASSWORD = 'admin';
+// Shared secret between the Alfresco repository and the search stack (OpenSearch
+// batch-indexer). Both sides must use the same value.
+const DEFAULT_SEARCH_SHARED_SECRET = 'secret';
 
 type option = {
   name: string;
@@ -16,6 +19,14 @@ function alfrescoJavaOpts(useActiveMqCredentials = false): string {
     : '';
 
   return `JAVA_OPTS="-Ddb.driver=org.postgresql.Driver -Ddb.username=alfresco -Ddb.password=alfresco -Ddb.url=jdbc:postgresql://postgres:5432/alfresco -Dsolr.host=solr6 -Dsolr.port=8983 -Dsolr.http.connection.timeout=1000 -Dsolr.secureComms=secret -Dsolr.sharedSecret=secret -Dsolr.base.url=/solr -Dindex.subsystem.name=solr6 -Dshare.host=127.0.0.1 -Dshare.port=8080 -Dalfresco.host=localhost -Dalfresco.port=8080 -Daos.baseUrlOverwrite=http://localhost:8080/alfresco/aos -Dmessaging.broker.url='failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true'${brokerCredentials} -Ddeployment.method=DOCKER_COMPOSE -DlocalTransform.core-aio.url=http://transform-core-aio:8090/ -Dhttpclient.config.transform.connectionRequestTimeout=500000 -Dcsrf.filter.enabled=false -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"`;
+}
+
+// JAVA_OPTS for Alfresco 26.2+, which replaces the Solr 6 search subsystem with
+// the OpenSearch-based 'elasticsearch' subsystem (Alfresco Search Community).
+function alfrescoJavaOpts26_2(): string {
+  const brokerCredentials = ` -Dmessaging.broker.username=${DEFAULT_ACTIVEMQ_USER} -Dmessaging.broker.password=${DEFAULT_ACTIVEMQ_PASSWORD}`;
+
+  return `JAVA_OPTS="-Ddb.driver=org.postgresql.Driver -Ddb.username=alfresco -Ddb.password=alfresco -Ddb.url=jdbc:postgresql://postgres:5432/alfresco -Dindex.subsystem.name=elasticsearch -Delasticsearch.host=opensearch -Delasticsearch.port=9200 -Delasticsearch.createIndexIfNotExists=true -Dsolr.secureComms=secret -Dsolr.sharedSecret=${DEFAULT_SEARCH_SHARED_SECRET} -Dalfresco.restApi.basicAuthScheme=true -Dshare.host=127.0.0.1 -Dshare.port=8080 -Dalfresco.host=localhost -Dalfresco.port=8080 -Daos.baseUrlOverwrite=http://localhost:8080/alfresco/aos -Dmessaging.broker.url='failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true'${brokerCredentials} -Ddeployment.method=DOCKER_COMPOSE -DlocalTransform.core-aio.url=http://transform-core-aio:8090/ -Dhttpclient.config.transform.connectionRequestTimeout=500000 -Dcsrf.filter.enabled=false -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80"`;
 }
 
 function activeMqRunOptions(useCredentials = false): string[] {
@@ -187,6 +198,78 @@ const ConfigurationMap26_1 = {
     run: {
       ...ConfigurationMap.activemq(image).run,
       options: activeMqRunOptions(true),
+    },
+  }),
+};
+// Alfresco 26.2 drops the Solr 6 search service in favour of Alfresco Search
+// Community (OpenSearch cluster + batch-indexing application). The repository
+// now points at the 'elasticsearch' subsystem, and two new services replace
+// 'solr6': 'opensearch' (the search cluster) and 'batch-indexer' (continuous
+// synchronization from the repository into OpenSearch).
+const ConfigurationMap26_2 = {
+  ...ConfigurationMap26_1,
+  alfresco: (image: string) => ({
+    ...ConfigurationMap.alfresco(image),
+    run: {
+      ...ConfigurationMap.alfresco(image).run,
+      options: [
+        '--memory',
+        '3328m',
+        '-e',
+        'JAVA_TOOL_OPTIONS="-Dencryption.keystore.type=JCEKS -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding -Dencryption.keyAlgorithm=DESede -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore -Dmetadata-keystore.password=mp6yc0UD9e -Dmetadata-keystore.aliases=metadata -Dmetadata-keystore.metadata.password=oKIWzVdEdA -Dmetadata-keystore.metadata.algorithm=DESede"',
+        '-e',
+        alfrescoJavaOpts26_2(),
+      ],
+    },
+  }),
+  opensearch: (image: string) => ({
+    service: 'opensearch',
+    image,
+    run: {
+      options: [
+        '--memory',
+        '1152m',
+        '-e',
+        'discovery.type=single-node',
+        '-e',
+        'DISABLE_SECURITY_PLUGIN=true',
+        '-e',
+        'OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m',
+      ],
+      cmd: '',
+      ports: '-p 9200:9200',
+      order: 0,
+    },
+  }),
+  'batch-indexer': (image: string) => ({
+    service: 'batch-indexer',
+    image,
+    run: {
+      options: [
+        '--memory',
+        '1024m',
+        '-e',
+        'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/alfresco',
+        '-e',
+        'SPRING_DATASOURCE_USERNAME=alfresco',
+        '-e',
+        'SPRING_DATASOURCE_PASSWORD=alfresco',
+        '-e',
+        'SPRING_ELASTICSEARCH_REST_URIS=http://opensearch:9200',
+        '-e',
+        'ALFRESCO_ACS_URL=http://alfresco:8080',
+        '-e',
+        'ALFRESCO_ACCEPTEDCONTENTMEDIATYPESCACHE_BASEURL=http://transform-core-aio:8090/transform/config',
+        '-e',
+        `ALFRESCO_CONTENT_TRANSFORM_SHAREDSECRET=${DEFAULT_SEARCH_SHARED_SECRET}`,
+        '-e',
+        'ALFRESCO_REINDEX_CONTINUOUS_POLLINGINTERVAL=15s',
+        '-e',
+        'JAVA_OPTS=-Xms256m -Xmx768m',
+      ],
+      cmd: '',
+      ports: '',
+      order: 3,
     },
   }),
 };
@@ -380,6 +463,29 @@ export const ALFRESCO_23_4_CONFIGURATION: ServiceConfiguration[] =
     },
     { name: 'postgres', image: 'postgres:15.6' },
   ], ConfigurationMap26_1);
+export const ALFRESCO_26_2_CONFIGURATION: ServiceConfiguration[] =
+  createConfigurationFor([
+    {
+      name: 'alfresco',
+      image: 'alfresco/alfresco-content-repository-community:26.2.0',
+    },
+    {
+      name: 'activemq',
+      image: 'alfresco/alfresco-activemq:6.2.6-jre17-rockylinux8',
+    },
+    { name: 'proxy', image: 'alfresco/alfresco-acs-nginx:3.4.2' },
+    { name: 'content-app', image: 'alfresco/alfresco-content-app:8.0.0' },
+    { name: 'opensearch', image: 'opensearchproject/opensearch:2.11.1' },
+    {
+      name: 'batch-indexer',
+      image: 'alfresco/alfresco-elasticsearch-batch-indexing:5.7.0',
+    },
+    {
+      name: 'transform-core-aio',
+      image: 'alfresco/alfresco-transform-core-aio:5.4.3',
+    },
+    { name: 'postgres', image: 'postgres:15.6' },
+  ], ConfigurationMap26_2);
 export const ALFRESCO_7_3_CONFIGURATION_AARCH64: ServiceConfiguration[] =
   createConfigurationFor([
     {
