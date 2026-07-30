@@ -10,6 +10,17 @@ docker extension install angelborroy/alfresco-extension
 
 Following instructions are only required to build and develop the extension.
 
+## Supported Alfresco versions
+
+The extension lets you deploy any of the following Alfresco Community versions:
+
+- 7.2, 7.3, 7.4
+- 23.1, 23.2, 23.4
+- 25.1, 25.2, 25.3
+- 26.1, 26.2
+
+Version 26.2 replaces the Solr 6 search service with Alfresco Search (OpenSearch cluster plus batch indexer).
+
 ## Prerequisites
 
 Runtime Requirements:
@@ -29,7 +40,7 @@ In Docker Desktop, go to `Preferences > Extensions` and check `Enable Docker Ext
 
 ## Running the extension
 
-Since this Docker Extensions hasn't been yet published, it's required to build and deploy it locally from source code.
+The published extension can be installed directly (see the top of this document). To build and deploy it locally from source code instead, follow the steps below.
 
 Make sure that [Docker Desktop](https://www.docker.com/products/docker-desktop/) is running in the background.
 
