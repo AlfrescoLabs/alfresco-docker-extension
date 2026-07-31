@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.title="Alfresco Community" \
         {\"title\":\"Support\", \"url\":\"https://github.com/AlfrescoLabs/alfresco-docker-extension/issues\"} \
     ]" \
     com.docker.extension.changelog="<ul>\
-    <li>Support for Alfresco 26.2</li> \
+    <li>Fix Alfresco 26.2 search services startup (OpenSearch and batch-indexer)</li> \
     </ul>"
 
 COPY docker-compose.yaml .

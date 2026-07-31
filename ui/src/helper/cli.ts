@@ -110,9 +110,14 @@ function groupByRunOrder(
 export async function runContainers(exposePorts: boolean, services: ServiceConfiguration[]) {
   await createNetwork('alfresco');
   const runGroups = groupByRunOrder(services);
-  runGroups.forEach(async (group) => {
+  // Deploy each run.order group sequentially. A previous implementation used
+  // forEach with an async callback, which does not await between groups, so all
+  // groups started concurrently and the run.order was effectively ignored. Use
+  // for...of so lower-order services (e.g. opensearch) are launched before the
+  // services that depend on them (e.g. batch-indexer).
+  for (const group of runGroups) {
     await Promise.all(group.map(service => deployService(exposePorts, service)));
-  });
+  }
 }
 
 export async function setup(services: ServiceConfiguration[]) {

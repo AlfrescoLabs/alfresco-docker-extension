@@ -227,14 +227,18 @@ const ConfigurationMap26_2 = {
     image,
     run: {
       options: [
+        // 512m heap plus off-heap (Lucene mmap, thread stacks, etc.); the
+        // container idles near ~900m, so keep headroom above the 1152m it used
+        // to have to avoid an OOM-kill (which, with '--rm', shows as
+        // NO_CONTAINER) under indexing/GC spikes.
         '--memory',
-        '1152m',
+        '1536m',
         '-e',
         'discovery.type=single-node',
         '-e',
         'DISABLE_SECURITY_PLUGIN=true',
         '-e',
-        'OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m',
+        'OPENSEARCH_JAVA_OPTS="-Xms512m -Xmx512m"',
       ],
       cmd: '',
       ports: '-p 9200:9200',
@@ -264,8 +268,18 @@ const ConfigurationMap26_2 = {
         `ALFRESCO_CONTENT_TRANSFORM_SHAREDSECRET=${DEFAULT_SEARCH_SHARED_SECRET}`,
         '-e',
         'ALFRESCO_REINDEX_CONTINUOUS_POLLINGINTERVAL=15s',
+        // On startup the batch-indexer creates its watermark index in OpenSearch
+        // and, by default, gives up after only 3 attempts x 2s (~6s). OpenSearch
+        // (a JVM) needs far longer than that to accept connections, so the app's
+        // Spring context fails and the container exits; because containers run
+        // with '--rm' it is then auto-removed and shows as NO_CONTAINER. Extend
+        // the retry budget to ~30 x 5s (~2.5m) so it waits for OpenSearch to boot.
         '-e',
-        'JAVA_OPTS=-Xms256m -Xmx768m',
+        'ALFRESCO_REINDEX_CONTINUOUS_WATERMARKRETRYMAXATTEMPTS=30',
+        '-e',
+        'ALFRESCO_REINDEX_CONTINUOUS_WATERMARKRETRYDELAY=5s',
+        '-e',
+        'JAVA_OPTS="-Xms256m -Xmx768m"',
       ],
       cmd: '',
       ports: '',
